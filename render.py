@@ -8,6 +8,7 @@ from mathutils import Vector
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from episode import read_episode
+from fetch_avatar import TARGET as AVATAR_FILE
 
 
 def material(name, color):
@@ -55,7 +56,53 @@ def keys(obj, prop, values):
         obj.keyframe_insert(data_path=prop, frame=frame)
 
 
+def roblox_actor(name, pos, shirt, hair, yaw, adult):
+    before = set(bpy.data.objects)
+    bpy.ops.import_scene.fbx(filepath=str(AVATAR_FILE), use_anim=False)
+    imported = set(bpy.data.objects) - before
+    armature = next(obj for obj in imported if obj.type == "ARMATURE")
+    meshes = [obj for obj in imported if obj.type == "MESH" and obj.name.split(".")[0].endswith("_Geo")]
+    bpy.context.view_layer.update()
+    foot = min((obj.matrix_world @ Vector(corner)).z for obj in meshes for corner in obj.bound_box)
+    top = max((obj.matrix_world @ Vector(corner)).z for obj in meshes for corner in obj.bound_box)
+    size = 2.2 / (top - foot)
+    for obj in imported - set(meshes) - {armature}:
+        bpy.data.objects.remove(obj, do_unlink=True)
+    for mesh in meshes:
+        body = mesh.name.split(".")[0]
+        if body == "Head_Geo":
+            continue
+        color = shirt
+        if "Leg" in body:
+            color = denim
+        elif "Foot" in body:
+            color = ink
+        elif "Hand" in body:
+            color = peach
+        mesh.data.materials.clear()
+        mesh.data.materials.append(color)
+    rig = group(name, pos)
+    rig.rotation_euler.z = yaw
+    armature.parent = rig
+    armature.scale *= size
+    armature.location.z = -foot * size
+    head = armature.pose.bones["Head"]
+    arms = [armature.pose.bones[side + "UpperArm"] for side in ("Right", "Left")]
+    legs = [armature.pose.bones[side + "UpperLeg"] for side in ("Right", "Left")]
+    for bone in [head, *arms, *legs]:
+        bone.rotation_mode = "XYZ"
+    cap = piece(rig, "Side-part hair" if adult else "Swept hair", (0, .035, 2.15), (.51, .48, .125), hair)
+    if adult:
+        piece(rig, "Bob", (0, .19, 1.97), (.53, .20, .40), hair, .06)
+    else:
+        cap.rotation_euler.y = -.13
+        piece(rig, "Fringe", (-.13, -.177, 2.105), (.25, .11, .145), hair)
+    return rig, head, arms, legs
+
+
 def actor(name, pos, shirt, hair, skin, yaw=0, adult=False):
+    if avatar == "roblox-r15":
+        return roblox_actor(name, pos, shirt, hair, yaw, adult)
     rig = group(name, pos)
     rig.rotation_euler.z = yaw
     piece(rig, "Sweatshirt", (0, 0, 1.27), (.69, .43, .68), shirt, .07)
@@ -164,7 +211,7 @@ def cat(pos, frames):
                                   (frames, (0, 0, .12))])
 
 
-def town(frames):
+def town(frames, action):
     grass = material("Grass", (.22, .56, .22))
     asphalt = material("Asphalt", (.087, .12, .16))
     roof = material("Terracotta", (.37, .089, .055))
@@ -194,6 +241,20 @@ def town(frames):
             box("Tree crown", (side*4.1, trunk_y, 1.62), (.9, .95, 1.08), leaf, .18)
     kid, _, arms, legs = actor("Narrator", (.05, -.3, .05), teal, brown, peach)
     keys(kid, "location", [(1, (.05, -.3, .05)), (frames, (.05, -1.1, .05))])
+    if action in {"dusk", "streetdoor"}:
+        twin, _, _, _ = actor("Twin", (-.82, .21, .05), teal, brown, peach, -.18)
+        keys(twin, "location", [(1, (-.82, .21, .05)), (frames, (-.72, -.76, .05))])
+        keys(kid, "location", [(1, (.45, -.05, .05)), (frames, (.55, -.9, .05))])
+        sky.inputs["Color"].default_value = (.14, .28, .51, 1)
+    if action == "streetdoor":
+        street_portal = group("Door in the road", (0, .7, .045))
+        for x in (-.72, .72):
+            piece(street_portal, "Portal jamb", (x, 0, 1.24), (.12, .22, 2.48), amber)
+        piece(street_portal, "Portal lintel", (0, 0, 2.45), (1.57, .23, .12), amber)
+        piece(street_portal, "Portal leaf", (0, -.045, 1.22), (1.34, .18, 2.36), yellow)
+        piece(street_portal, "Knob", (.49, -.17, 1.21), (.13, .13, .13), ink)
+        keys(street_portal, "location", [(1, (0, .7, -2.55)), (frames//4, (0, .7, -2.55)),
+                                           (frames//2, (0, .7, .045)), (frames, (0, .7, .045))])
     for limbs, amplitude in ((arms, .29), (legs, -.23)):
         for index, limb in enumerate(limbs):
             swing = (-1)**index * amplitude
@@ -202,7 +263,26 @@ def town(frames):
                        (3*frames//4, -swing), (frames, swing))]
             keys(limb, "rotation_euler", values)
     light("SUN", (4, -5, 8), 2.0, (1, .88, .68), (0, 0, 0), 0)
-    camera((2.6, -6.3, 2.65), (1.9, -5.6, 2.5), (0, .15, 1.45), 33, frames)
+    if action == "streetdoor":
+        camera((2.4, -4.9, 2.8), (1.7, -4.1, 2.6), (0, .3, 1.22), 34, frames)
+    elif action == "dusk":
+        camera((-2.5, -5.7, 2.6), (-2.1, -4.6, 2.4), (0, -.2, 1.47), 37, frames)
+    else:
+        camera((2.6, -6.3, 2.65), (1.9, -5.6, 2.5), (0, .15, 1.45), 33, frames)
+
+
+def brass_key(pos, angle):
+    prop = group("Brass key", pos)
+    prop.rotation_euler.z = angle
+    bpy.ops.mesh.primitive_torus_add(major_segments=24, minor_segments=8,
+                                     major_radius=.078, minor_radius=.018)
+    ring = bpy.context.object
+    ring.name = "Bow"
+    ring.parent = prop
+    ring.location = (0, 0, .023)
+    ring.data.materials.append(yellow)
+    piece(prop, "Key blade", (.135, 0, .026), (.16, .041, .038), amber, .008)
+    piece(prop, "Key tooth", (.2, .026, .026), (.037, .069, .038), amber, .006)
 
 
 def hallway(action, frames):
@@ -237,7 +317,7 @@ def hallway(action, frames):
     for x in (-2.1, 2.08):
         box("Picture frame", (x, 2.51, 2.76), (.57, .08, .65), cream)
         box("Picture", (x, 2.45, 2.76), (.42, .06, .49), coral if x < 0 else teal)
-    _, kid_head, kid_arms, _ = actor("Narrator", (-1.13, .15, 0), teal, brown, peach, .36)
+    kid, kid_head, kid_arms, kid_legs = actor("Narrator", (-1.13, .15, 0), teal, brown, peach, .36)
     mom, mom_head, mom_arms, _ = actor("Mom", (1.1, .78, 0), coral, ink, peach, -.38, adult=True)
     mom.scale = (1.1,)*3
     keys(kid_head, "rotation_euler", [(1, (0, 0, -.10)), (frames, (.11, 0, .37))])
@@ -245,7 +325,9 @@ def hallway(action, frames):
     if action == "appear":
         keys(mom_arms[0], "rotation_euler", [(1, (0, 0, 0)), (frames//3, (-.6, -.12, .65)),
                                              (frames, (-.48, -.15, .56))])
-    if action == "lie":
+    if action == "clock":
+        brass_key((-2.10, 1.60, .946), -.3)
+    if action in {"lie", "clock"}:
         box("Unbroken wall", (0, 2.65, 1.45), (2.04, .21, 2.93), wall)
         keys(kid_arms[0], "rotation_euler", [(1, (0, 0, 0)), (frames//2, (-.9, .2, -.25)), (frames, (-.15, 0, 0))])
     else:
@@ -267,13 +349,13 @@ def hallway(action, frames):
             for frame in impacts:
                 jitter.extend([(frame-1, (0, 0, 0)), (frame, (0, 0, .034)), (frame+2, (0, 0, 0))])
             keys(hinge, "rotation_euler", jitter)
-        if action in {"open", "twist"}:
+        if action in {"open", "twist", "twin", "key", "escape"}:
             angle = -1.9
             if action == "open":
                 keys(hinge, "rotation_euler", [(1, (0, 0, 0)), (frames//3, (0, 0, angle)), (frames, (0, 0, angle))])
             else:
                 hinge.rotation_euler.z = angle
-            double, _, double_arms, _ = actor("Double", (.18, 3.03, .06), teal, brown, peach, -.13)
+            double, _, double_arms, double_legs = actor("Double", (.18, 3.03, .06), teal, brown, peach, -.13)
             prop = group("Hidden hammer", (.205, -.465, 1.39))
             prop.parent = double
             prop.rotation_euler.y = -.35
@@ -283,6 +365,17 @@ def hallway(action, frames):
             keys(double, "location", [(1, (.18, 3.03, .06)), (frames, (.18, 1.91, .06))])
             for arm in double_arms:
                 arm.rotation_euler.x = -.8
+            if action == "key":
+                brass_key((.47, 2.29, 1.42), 1.1)
+                keys(kid_arms[1], "rotation_euler", [(1, (0, 0, 0)), (frames//2, (-.85, 0, 0))])
+            if action == "escape":
+                keys(kid, "location", [(1, (-1.13, .15, 0)), (frames, (-.55, -2.4, 0))])
+                keys(double, "location", [(1, (.18, 1.82, .06)), (frames, (.42, -1.94, .03))])
+                for legs in (kid_legs, double_legs):
+                    for side, leg in zip((-1, 1), legs):
+                        keys(leg, "rotation_euler", [(1, (side*.24, 0, 0)),
+                              (frames//3, (-side*.35, 0, 0)), (2*frames//3, (side*.35, 0, 0)),
+                              (frames, (-side*.20, 0, 0))])
     for index, x in enumerate((-2.06, 2.06)):
         door = box("Hall closet", (x, 2.51, 1.05), (1.05, .105, 2.1), brown)
         inset = box("Closet panel", (x, 2.445, 1.33), (.79, .04, 1.35), wood)
@@ -309,13 +402,19 @@ def hallway(action, frames):
         "appear": ((2.14, -3.8, 2.16), (1.72, -3.35, 2), (.27, 1.9, 1.5), 37),
         "knock": ((.28, -.56, 1.81), (.19, .02, 1.74), (.22, 2.39, 1.53), 50),
         "open": ((.54, -.67, 1.86), (.63, -.35, 1.80), (.20, 2.31, 1.42), 44),
+        "clock": ((-2.34, -.10, 2.07), (-2.17, .54, 1.75), (-2.17, 1.7, .92), 47),
+        "twin": ((-.68, .03, 1.76), (-.43, .40, 1.88), (.12, 2.25, 1.67), 47),
+        "key": ((.83, .46, 1.58), (.70, .85, 1.50), (.47, 2.28, 1.43), 48),
+        "escape": ((1.61, -3.33, 2.24), (1.04, -4.48, 2.46), (0, -.09, 1.50), 33),
         "twist": ((.56, -2.95, 2.05), (.32, -5.14, 2.41), (0, 1.91, 1.62), 32),
     }
     camera(*shots[action], frames)
 
 
 episode_path, index, duration, width, fps, engine, target = sys.argv[sys.argv.index("--")+1:]
-shot = read_episode(episode_path)["shots"][int(index)]
+episode = read_episode(episode_path)
+avatar = episode.get("avatar")
+shot = episode["shots"][int(index)]
 frames = max(12, int(duration))
 bpy.ops.wm.read_factory_settings(use_empty=True)
 scene = bpy.context.scene
@@ -346,8 +445,8 @@ denim = material("Denim", (.055, .113, .27))
 red = material("Red", (.64, .055, .044))
 yellow = material("Yellow", (.98, .62, .049))
 amber = material("Amber", (.81, .36, .018))
-if shot["action"] == "town":
-    town(frames)
+if shot["action"] in {"town", "dusk", "streetdoor"}:
+    town(frames, shot["action"])
 else:
     hallway(shot["action"], frames)
 scene.render.image_settings.media_type = "VIDEO"

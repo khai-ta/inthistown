@@ -101,7 +101,7 @@ Style: Title,Arial,48,&H00F9F9FF,&H000000FF,&H00101923,&H80000000,-1,0,0,0,100,1
     ending = offsets[-1]
     filters = (
         "[3:a]asplit=2[up][slow];"
-        "[up]atrim=duration=58,asetpts=PTS-STARTPTS,atempo=1.06,apad,atrim=duration=58,"
+        "[up]atrim=duration=62,asetpts=PTS-STARTPTS,atempo=1.06,apad,atrim=duration=58,"
         "afade=t=in:d=.25,afade=t=out:st=57.60:d=.40,volume=.20,adelay=12000:all=1[m1];"
         f"[slow]atrim=start=28,asetpts=PTS-STARTPTS,atempo=.84,atrim=duration={ending-70},"
         f"afade=t=in:d=.50,afade=t=out:st={ending-70-.20}:d=.20,volume=.23,adelay=70000:all=1[m2];"

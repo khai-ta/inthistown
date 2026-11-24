@@ -94,7 +94,8 @@ class PartySet:
             self.block("Front door", (x,front-.151,1.22), (1.02,.10,2.43), self.m["navy"])
             self.block("Door handle", (x+.34,front-.22,1.15), (.087,.08,.103), self.r.amber)
         else:
-            self.block("Open doorway", (x,front-.145,1.22), (1.03,.016,2.43), self.m["warm"])
+            interior = self.m["navy"] if self.action == "party_lantern" else self.m["warm"]
+            self.block("Open doorway", (x,front-.145,1.22), (1.03,.016,2.43), interior)
         for sign in (-1, 1):
             wx = x + sign * width * .29
             self.block("Window trim", (wx,front-.06,1.77), (1.38,.14,1.31), self.r.cream)
@@ -160,7 +161,7 @@ class PartySet:
         for x in (-13.6,-4.25,4.27,13.57):
             b("Street lamp",(x,-3.20,1.34),(.115,.118,2.68),m["navy"],.019)
             b("Lamp head",(x,-3.36,2.72),(.34,.47,.14),m["navy"],.030)
-            b("Lamp diffuser",(x,-3.37,2.638),(.25,.36,.037),m["warm"],.017)
+            b("Lamp diffuser",(x,-3.37,2.638),(.25,.36,.037),m["navy"] if self.action=="party_lantern" else m["warm"],.017)
         for x, y, shade in ((-5.47,-1.47,m["sand"]),(12.60,-1.44,m["rose"])):
             b("Driveway",(x,(-1.08-4.0)/2,.019),(2.02,3.00,.034),m["walk"],.018)
             self.car("Parked on driveway",(x,y,.01),0,shade)
@@ -193,20 +194,33 @@ class PartySet:
         for x in (-3.94,3.94):
             b("Side wall",(x,.45,1.56),(.18,6.47,3.13),m["wall"])
         b("Back wall",(0,3.64,1.56),(7.96,.18,3.13),m["wall"])
-        b("Front wall",(0,-2.76,1.56),(7.96,.18,3.13),m["wall"])
-        b("Room baseboard",(0,-2.64,.15),(7.8,.08,.26),self.r.cream)
+        if bedroom:
+            b("Front wall",(0,-2.76,1.56),(7.96,.18,3.13),m["wall"])
+            b("Room baseboard",(0,-2.64,.15),(7.8,.08,.26),self.r.cream)
+        else:
+            for sign in (-1,1):
+                b("Front wall beside doorway",(sign*2.26,-2.76,1.56),(3.46,.18,3.13),m["wall"])
+                b("Room baseboard",(sign*2.25,-2.64,.15),(3.42,.08,.26),self.r.cream)
+            b("Door lintel",(0,-2.76,2.79),(1.13,.18,.69),m["wall"])
+            b("Outside landing",(0,-3.49,-.105),(2.88,1.61,.21),m["walk"])
+            b("Dark front lawn",(0,-5.23,-.24),(14.1,5.2,.31),m["grass"])
+            b("Street beyond doorway",(0,-9.34,-.048),(21.1,4.10,.038),m["asphalt"])
+            self.r.light("AREA",(0,-4.46,2.45),65,(.61,.70,1),(0,-3.36,.81),2.1)
         b("Rug",(0,-.18,.016),(3.74,2.04,.034),m["fabric"],.13)
         b("Room pendant",(0,.5,2.91),(.62,.52,.17),m["navy"])
-        b("Pendant diffuser",(0,.5,2.81),(.48,.42,.062),m["warm"],.02)
-        self.r.light("AREA",(-2,1.85,2.73),207,(1,.73,.47),(0,-.8,1.1),2.4)
-        self.r.light("AREA",(2,-.2,2.68),142,(.72,.81,1),(0,-.6,1.2),2.8)
+        b("Pendant diffuser",(0,.5,2.81),(.48,.42,.062),m["navy"] if self.action=="party_beat" else m["warm"],.02)
+        power = .32 if self.action == "party_beat" else 1
+        self.r.light("AREA",(-2,1.85,2.73),207*power,(1,.73,.47),(0,-.8,1.1),2.4)
+        self.r.light("AREA",(2,-.2,2.68),142*power,(.72,.81,1),(0,-.6,1.2),2.8)
         if bedroom:
             b("Bed base",(-2.25,.70,.40),(1.63,2.35,.70),m["navy"])
             b("Bed quilt",(-2.25,.62,.83),(1.58,2.22,.18),m["fabric"])
             b("Pillow",(-2.25,1.54,.95),(1.10,.42,.12),self.r.cream,.06)
             b("Nightstand",(-2.8,-1.28,.43),(.75,.67,.85),self.r.brown)
         else:
-            b("Front door trim", (0,-2.62,1.28),(1.26,.13,2.52),self.r.cream)
+            for x in (-.575,.575):
+                b("Door jamb",(x,-2.62,1.23),(.12,.13,2.47),self.r.cream)
+            b("Door head trim",(0,-2.62,2.47),(1.26,.13,.12),self.r.cream)
             door = self.r.group("Hinged front door",(-.52,-2.53,0))
             self.r.piece(door,"Door panel",(.52,0,1.21),(1.06,.109,2.41),m["navy"])
             self.r.piece(door,"Handle",(.94,.075,1.09),(.12,.10,.11),self.r.amber)

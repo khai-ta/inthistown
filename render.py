@@ -1,6 +1,5 @@
 """Build and render a shot with Blender's embedded Python."""
 
-import math
 from pathlib import Path
 import sys
 
@@ -132,7 +131,7 @@ def light(kind, pos, power, color, target, size):
         obj.data.size = size
 
 
-def clock(name, pos, scale, frames=0):
+def clock(name, pos, scale):
     prop = group(name, pos)
     piece(prop, "Clock rim", (0, 0, 0), (.58, .13, .58), ink, .07)
     piece(prop, "Clock face", (0, -.074, 0), (.45, .036, .45), cream)
@@ -140,8 +139,6 @@ def clock(name, pos, scale, frames=0):
     hand = group("Clock hand pivot", (0, -.10, 0))
     hand.parent = prop
     piece(hand, "Minute hand", (0, 0, .082), (.027, .025, .19), red, .008)
-    if frames:
-        keys(hand, "rotation_euler", [(1, (0, 0, 0)), (frames, (0, math.tau, 0))])
     prop.scale = (scale,) * 3
     return prop
 
@@ -245,10 +242,9 @@ def hallway(action, frames):
     mom.scale = (1.1,)*3
     keys(kid_head, "rotation_euler", [(1, (0, 0, -.10)), (frames, (.11, 0, .37))])
     keys(mom_head, "rotation_euler", [(1, (.04, 0, 0)), (frames, (-.12, 0, -.28))])
-    if action in {"lie", "appear"}:
-        if action == "appear":
-            keys(mom_arms[0], "rotation_euler", [(1, (0, 0, 0)), (frames//3, (-.6, -.12, .65)),
-                                              (frames, (-.48, -.15, .56))])
+    if action == "appear":
+        keys(mom_arms[0], "rotation_euler", [(1, (0, 0, 0)), (frames//3, (-.6, -.12, .65)),
+                                             (frames, (-.48, -.15, .56))])
     if action == "lie":
         box("Unbroken wall", (0, 2.65, 1.45), (2.04, .21, 2.93), wall)
         keys(kid_arms[0], "rotation_euler", [(1, (0, 0, 0)), (frames//2, (-.9, .2, -.25)), (frames, (-.15, 0, 0))])

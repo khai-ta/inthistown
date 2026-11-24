@@ -101,14 +101,16 @@ def narration(args, shots, index, work):
 
 
 def sound_effect(path, action, duration):
-    if action == "knock":
+    if action == "lie":
+        cues = [(.025, 91, .18, .10)]
+    elif action == "knock":
         cues = [(duration * t, 115, .20, .16) for t in (.37, .53, .69)]
     elif action == "appear":
-        cues = [(duration / 3, 528, .30, .09)]
+        cues = [(duration / 3, 88, .26, .16), (duration / 3, 528, .34, .07)]
     elif action == "open":
-        cues = [(duration / 3, 180, .45, .065)]
+        cues = [(.02, 340, .13, .07), (duration / 3, 126, .43, .085)]
     elif action == "twist":
-        cues = [(duration * .66, 73, .64, .10)]
+        cues = [(duration * t, pitch, .21, .18) for t, pitch in ((.69, 98), (.8, 136), (.87, 78))]
     else:
         return False
     from array import array
@@ -120,13 +122,26 @@ def sound_effect(path, action, duration):
             t = i / SAMPLE_RATE
             envelope = min(t * 700, 1) * math.exp(-5 * t / length)
             tone = math.sin((2 * math.pi) * pitch * t) + .23 * math.sin((2 * math.pi) * pitch * 2.7 * t)
-            samples[position + i] += round(32767 * gain * envelope * tone)
+            pulse = samples[position + i] + round(32767 * gain * envelope * tone)
+            samples[position + i] = max(-32768, min(32767, pulse))
     if sys.byteorder == "big":
         samples.byteswap()
     with wave.open(str(path), "wb") as file:
         file.setparams((1, 2, SAMPLE_RATE, 0, "NONE", "not compressed"))
         file.writeframes(samples.tobytes())
     return True
+
+
+def cut_effects(action, first_frame, frames, fps):
+    if action == "appear":
+        impact = first_frame + max(2, frames // 3) - 1
+        return [f"drawbox=c=white@.28:t=fill:enable='eq(n,{impact})'",
+                f"drawbox=c=white@.11:t=fill:enable='eq(n,{impact+1})'"]
+    if action == "twist":
+        fade_frames = min(round(.25 * fps), frames - 1)
+        end = first_frame + frames
+        return [f"fade=t=out:s={end-fade_frames-1}:n={fade_frames}"]
+    return []
 
 
 def render_episode(args):
@@ -139,6 +154,7 @@ def render_episode(args):
         events = []
         clips = []
         audio_files = []
+        flashes = []
         total_frames = 0
         for index, shot in enumerate(episode["shots"]):
             print(f"Shot {index + 1}/{len(episode['shots'])} · {shot['action']}", flush=True)
@@ -168,6 +184,9 @@ def render_episode(args):
                    "-t", str(duration), audio_name, cwd=work)
             clips.append(f"file '{raw[0].name}'")
             audio_files.append(work / audio_name)
+            effects = cut_effects(shot["action"], total_frames, frames, args.fps)
+            if shot["action"] != "twist" or index == len(episode["shots"]) - 1:
+                flashes.extend(effects)
             total_frames += frames
         with wave.open(str(work / "narration.wav"), "wb") as file:
             file.setparams((1, 2, SAMPLE_RATE, 0, "NONE", "not compressed"))
@@ -177,7 +196,7 @@ def render_episode(args):
         (work / "clips.txt").write_text("\n".join(clips) + "\n")
         (work / "captions.ass").write_text(CAPTION_HEADER + "\n".join(events) + "\n", encoding="utf-8")
         ffmpeg("-f", "concat", "-safe", "1", "-i", "clips.txt", "-i", "narration.wav",
-               "-map", "0:v", "-map", "1:a", "-vf", "ass=captions.ass",
+               "-map", "0:v", "-map", "1:a", "-vf", ",".join(flashes + ["ass=captions.ass"]),
                "-c:v", "libx264", "-crf", "17", "-pix_fmt", "yuv420p", "-c:a", "aac",
                "-b:a", "160k", "-movflags", "+faststart", "final.mp4", cwd=work)
         (work / "final.mp4").replace(output)

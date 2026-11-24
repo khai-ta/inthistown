@@ -348,6 +348,8 @@ def hallway(action, frames):
     kid, kid_head, kid_arms, kid_legs = actor("Narrator", (-1.13, .15, 0), teal, brown, peach, .36)
     mom, mom_head, mom_arms, _ = actor("Mom", (1.1, .78, 0), coral, ink, peach, -.38, adult=True)
     mom.scale = (1.1,)*3
+    if action == "open" and avatar == "roblox-r15":
+        mom.location.x = 1.84
     keys(kid_head, "rotation_euler", [(1, (0, 0, -.10)), (frames, (.11, 0, .37))])
     keys(mom_head, "rotation_euler", [(1, (.04, 0, 0)), (frames, (-.12, 0, -.28))])
     if action == "appear":

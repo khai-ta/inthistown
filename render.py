@@ -7,7 +7,7 @@ import bpy
 from mathutils import Vector
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from episode import read_episode
+from episode import MARKET_ACTIONS, read_episode
 from fetch_avatar import TARGET as AVATAR_FILE
 
 
@@ -56,9 +56,10 @@ def keys(obj, prop, values):
         obj.keyframe_insert(data_path=prop, frame=frame)
 
 
-def roblox_actor(name, pos, shirt, hair, yaw, adult):
+def roblox_actor(name, pos, shirt, hair, yaw, adult, model=None):
     before = set(bpy.data.objects)
-    bpy.ops.import_scene.fbx(filepath=str(AVATAR_FILE), use_anim=False)
+    source = AVATAR_FILE if model is None else AVATAR_FILE.with_name(model + ".fbx")
+    bpy.ops.import_scene.fbx(filepath=str(source), use_anim=False)
     imported = set(bpy.data.objects) - before
     armature = next(obj for obj in imported if obj.type == "ARMATURE")
     meshes = [obj for obj in imported if obj.type == "MESH" and obj.name.split(".")[0].endswith("_Geo")]
@@ -69,6 +70,13 @@ def roblox_actor(name, pos, shirt, hair, yaw, adult):
     for obj in imported - set(meshes) - {armature}:
         bpy.data.objects.remove(obj, do_unlink=True)
     for mesh in meshes:
+        if model is not None:
+            for mat in mesh.data.materials:
+                if mat and mat.use_nodes:
+                    for link in list(mat.node_tree.links):
+                        if link.to_socket.name == "Alpha":
+                            mat.node_tree.links.remove(link)
+            continue
         body = mesh.name.split(".")[0]
         color = peach if body == "Head_Geo" else shirt
         if "Leg" in body:
@@ -89,6 +97,8 @@ def roblox_actor(name, pos, shirt, hair, yaw, adult):
     legs = [armature.pose.bones[side + "UpperLeg"] for side in ("Right", "Left")]
     for bone in [head, *arms, *legs]:
         bone.rotation_mode = "XYZ"
+    if model is not None:
+        return rig, head, arms, legs
     face = group("Face details", (0, 0, 0))
     face.parent = rig
     for x in (-.089, .089):
@@ -490,6 +500,155 @@ def hallway(action, frames):
     camera(*shots[action], frames)
 
 
+def market_lettering(label, pos, size, color, parent=None):
+    bpy.ops.object.text_add()
+    text = bpy.context.object
+    text.name = label
+    text.parent = parent
+    text.location = pos
+    text.rotation_euler.x = 1.5708
+    text.data.body = label
+    text.data.size = size
+    text.data.align_x = "CENTER"
+    text.data.align_y = "CENTER"
+    text.data.extrude = .006
+    text.data.materials.append(color)
+    return text
+
+
+def market_gesture(character, frames, energy, offset=0):
+    rig, head, arms, legs = character
+    rest = rig.location.copy()
+    turn = rig.rotation_euler.z
+    fraction = (.0, .21, .44, .67, .88, 1.0)
+    beats = [min(frames, 1 + int((frames - 1) * part)) for part in fraction]
+    for side, upper in zip((-1, 1), arms):
+        lower = upper.children[0]
+        if lower.name.endswith("LowerArm"):
+            lower.rotation_mode = "XYZ"
+            keys(lower, "rotation_euler", [(frame, (.22 + .49 * energy * (i % 2), 0, .04 * side))
+                 for i, frame in enumerate(beats)])
+        keys(upper, "rotation_euler", [(frame, (energy * (.36 if (i + offset) % 2 else -.76),
+                                               .1 * side, -.22 * side * energy))
+             for i, frame in enumerate(beats)])
+    for side, thigh in zip((-1, 1), legs):
+        knee = thigh.children[0]
+        knee.rotation_mode = "XYZ"
+        keys(thigh, "rotation_euler", [(frame, (.25 * energy * side * (-1)**i, 0, 0))
+                                       for i, frame in enumerate(beats)])
+        keys(knee, "rotation_euler", [(frame, (.33 * energy * (i % 2), 0, 0))
+                                      for i, frame in enumerate(beats)])
+    keys(head, "rotation_euler", [(frame, (.125 * (-1)**i, .18 * (-1)**(i+offset), .06))
+                                  for i, frame in enumerate(beats)])
+    keys(rig, "rotation_euler", [(frame, (.07 * energy * (-1)**i, 0, turn + .16 * (-1)**(i+offset)))
+                                 for i, frame in enumerate(beats)])
+    keys(rig, "location", [(frame, (rest.x + .11*energy * (-1)**i, rest.y - .15*energy*(i % 3),
+                                     rest.z + .09*energy*(i % 2)))
+                           for i, frame in enumerate(beats)])
+
+
+def market_camera(action, frames):
+    close = {
+        "market_ticket": ((.79, -2.7, 1.83), (.72, .74, 1.62), 51),
+        "market_friend": ((-2.25, -2.7, 1.93), (-1.38, .08, 1.72), 47),
+        "market_mayor": ((2.7, -2.35, 1.92), (1.43, .40, 1.68), 45),
+        "market_win": ((-1.88, -2.5, 1.83), (-1.37, .10, 1.69), 45),
+        "market_blackout": ((-.18, -2.35, 1.78), (-.60, .10, 1.57), 43),
+        "market_end": ((.72, -2.65, 1.88), (.66, .68, 1.63), 51),
+    }
+    position, target, lens = close.get(action, ((.95, -2.8, 1.95), (.02, .04, 1.66), 48))
+    tracks = [
+        (0.0, (-3.0, -6.2, 3.4), (0, .68, 1.63), 33, -.055),
+        (.32, (-1.6, -5.1, 2.65), (0, .50, 1.54), 38, .022),
+        (.33, position, target, lens, -.075),
+        (.70, (position[0]+.35, position[1]+.22, position[2]-.13), target, lens+4, .055),
+        (.71, (2.4, -5.15, 2.64), (0, .67, 1.52), 36, -.037),
+        (1.0, (1.2, -4.45, 2.27), (0, .57, 1.57), 40, 0),
+    ]
+    bpy.ops.object.camera_add()
+    camera_obj = bpy.context.object
+    scene.camera = camera_obj
+    camera_obj.data.sensor_fit = "HORIZONTAL"
+    previous = 0
+    for ratio, pos, point, focal, roll in tracks:
+        frame = max(previous + 1, round(1 + (frames-1)*ratio))
+        previous = frame
+        camera_obj.location = pos
+        camera_obj.rotation_euler = (Vector(point)-camera_obj.location).to_track_quat("-Z", "Y").to_euler()
+        camera_obj.rotation_euler.rotate_axis("Z", roll)
+        camera_obj.data.lens = focal
+        camera_obj.data.keyframe_insert(data_path="lens", frame=frame)
+        camera_obj.keyframe_insert(data_path="location", frame=frame)
+        camera_obj.keyframe_insert(data_path="rotation_euler", frame=frame)
+
+
+def stage_market(action, frames):
+    navy = material("Midnight paving", (.038, .055, .13))
+    violet = material("Storefront violet", (.20, .054, .36))
+    mint = material("Ticker mint", (.08, .94, .46))
+    pink = material("Ticker pink", (1, .095, .34))
+    blue = material("Ticker blue", (.105, .46, .92))
+    for shade in (mint, pink, blue, yellow):
+        shader = shade.node_tree.nodes.get("Principled BSDF")
+        shader.inputs["Emission Color"].default_value = shade.diffuse_color
+        shader.inputs["Emission Strength"].default_value = .55
+    box("Plaza", (0, 1, -.16), (22, 22, .30), navy)
+    for x in range(-7, 8):
+        box("Paving line", (x, 1, -.007), (.021, 19, .016), blue, .003)
+    for i, x in enumerate((-6.0, -3.8, 3.8, 6.0)):
+        height = 3.6 + .7 * (i % 3)
+        box("Market storefront", (x, 3.85, height/2), (2.05, 2.65, height), violet if i%2 else navy)
+        for z in (1.24, 2.35, 3.25):
+            box("Glowing window", (x, 2.50, z), (1.26, .10, .39), blue if i%2 else pink)
+    labels = {
+        "market_hook": ("+ $1,000,000", "NAME: UNKNOWN"),
+        "market_street": ("KALSHI TOWN", "EVERYTHING HAS ODDS"),
+        "market_win": ("FOUNTAIN: GOLD", "YES WINS"),
+        "market_ticket": ("WILL MILO", "DISAPPEAR?"),
+        "market_friend": ("JULES", "VOICE LOST"),
+        "market_mayor": ("TOWN HALL", "READ THE FINE PRINT"),
+        "market_count": ("MIDNIGHT", "YES 99c"),
+        "market_trade": ("LAST DOLLAR", "NO"),
+        "market_blackout": ("00:00", "WHO IS MILO?"),
+        "market_end": ("NEW MARKET", "WILL MILO TELL?"),
+    }
+    board = group("Market board", (0, 2.76, 2.70))
+    piece(board, "Ticker frame", (0, 0, 0), (4.10, .25, 1.28), violet, .10)
+    piece(board, "Ticker display", (0, -.145, 0), (3.9, .027, 1.08), ink, .04)
+    headline, status = labels[action]
+    market_lettering(headline, (0, -.184, .19), .34, mint if action != "market_end" else pink, board)
+    market_lettering(status, (0, -.185, -.25), .25, cream, board)
+    for side in (-1, 1):
+        piece(board, "Mount", (side*1.69, .05, -1.34), (.14, .14, 2.70), violet)
+    milo = roblox_actor("Milo", (0, -.03, 0), blue, brown, .11, False)
+    market_gesture(milo, frames, 1.04 if action in {"market_hook","market_trade","market_count"} else .63)
+    if action != "market_ticket":
+        jules = roblox_actor("Jules", (-1.47, .37, .025), pink, ink, .24, False, "Fish-Person")
+        market_gesture(jules, frames, 1.0 if action in {"market_friend","market_win"} else .57, 1)
+    if action != "market_friend":
+        mayor = roblox_actor("Mayor", (1.47, .43, 0), mint, brown, -.24, True, "GoblinCharacter")
+        market_gesture(mayor, frames, .87, 1)
+    if action in {"market_win", "market_trade", "market_hook"}:
+        for i in range(19):
+            x = ((i*37) % 101) / 21 - 2.4
+            z = 1 + ((i*13) % 43) / 16
+            token = box("Market confetti", (x, .45, z), (.093, .041, .14),
+                        (yellow, mint, pink)[i%3], .012)
+            hit = max(2, int(frames*.31))
+            keys(token, "scale", [(1, (.001,)*3), (hit-1, (.001,)*3), (hit, (1,)*3)])
+            keys(token, "location", [(hit, (x*.32, .65, 1.2)),
+                                     (frames, (x, -.7+(i%5)*.27, z+.32))])
+            keys(token, "rotation_euler", [(hit, (0, 0, 0)), (frames, (i*.7, i*.37, i*.2))])
+    if action in {"market_count", "market_end"}:
+        neon = piece(board, "Pulse bar", (0, -.19, -.49), (3.72, .045, .062), pink, .012)
+        keys(neon, "scale", [(1, (1, 1, 1)), (frames, (.04, 1, 1))])
+    light("AREA", (-3, -2.9, 4.4), 785, (.55, .72, 1), (0, 1, 1.2), 3.9)
+    light("AREA", (3, -1.7, 3.8), 575, (1, .57, .69), (0, 0, 1.4), 3.0)
+    light("AREA", (0, 2.18, 4.85), 690, (.37, 1, .8), (0, 0, 1.0), 3.2)
+    sky.inputs["Color"].default_value = (.095, .155, .39, 1)
+    market_camera(action, frames)
+
+
 episode_path, index, duration, width, fps, engine, target = sys.argv[sys.argv.index("--")+1:]
 episode = read_episode(episode_path)
 avatar = episode.get("avatar")
@@ -527,10 +686,14 @@ denim = material("Denim", (.055, .113, .27))
 red = material("Red", (.64, .055, .044))
 yellow = material("Yellow", (.98, .62, .049))
 amber = material("Amber", (.81, .36, .018))
-if shot["action"] in {"town", "dusk", "streetdoor"}:
+if shot["action"] in MARKET_ACTIONS:
+    stage_market(shot["action"], frames)
+elif shot["action"] in {"town", "dusk", "streetdoor"}:
     town(frames, shot["action"])
 else:
     hallway(shot["action"], frames)
+scene.render.fps = int(fps)
+scene.render.fps_base = 1
 scene.render.image_settings.media_type = "VIDEO"
 scene.render.ffmpeg.format = "MPEG4"
 scene.render.ffmpeg.codec = "H264"

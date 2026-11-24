@@ -13,6 +13,10 @@ from episode import read_episode
 def material(name, color):
     mat = bpy.data.materials.new(name)
     mat.diffuse_color = (*color, 1)
+    mat.use_nodes = True
+    shader = mat.node_tree.nodes.get("Principled BSDF")
+    shader.inputs["Base Color"].default_value = mat.diffuse_color
+    shader.inputs["Roughness"].default_value = .68
     return mat
 
 
@@ -60,12 +64,16 @@ def actor(name, pos, shirt, hair, skin, yaw=0):
     piece(head, "Head", (0, 0, 0), (.61, .55, .58), skin, .09)
     piece(head, "Hair", (0, .01, .255), (.65, .57, .18), hair, .06)
     piece(head, "Fringe", (-.16, -.264, .157), (.28, .085, .15), hair)
+    legs = []
     for side in (-1, 1):
         piece(head, "Eye", (side*.124, -.276, .015), (.054, .033, .078), ink)
         piece(head, "Eyebrow", (side*.124, -.278, .112), (.096, .028, .027), hair, .008)
         piece(head, "Cheek", (side*.193, -.274, -.08), (.075, .028, .034), blush, .012)
-        piece(rig, "Jeans", (side*.185, 0, .53), (.32, .36, .65), denim)
-        piece(rig, "Sneaker", (side*.185, -.066, .133), (.34, .48, .24), cream)
+        leg = group("Hip", (side*.185, 0, .93))
+        leg.parent = rig
+        piece(leg, "Jeans", (0, 0, -.39), (.32, .36, .65), denim)
+        piece(leg, "Sneaker", (0, -.066, -.797), (.34, .48, .24), cream)
+        legs.append(leg)
     piece(head, "Mouth", (0, -.277, -.12), (.13, .03, .035), ink, .01)
     arms = []
     for side in (-1, 1):
@@ -74,7 +82,7 @@ def actor(name, pos, shirt, hair, skin, yaw=0):
         piece(arm, "Sleeve", (0, 0, -.183), (.22, .37, .44), shirt)
         piece(arm, "Hand", (0, 0, -.447), (.207, .31, .16), skin)
         arms.append(arm)
-    return rig, head, arms
+    return rig, head, arms, legs
 
 
 def camera(start, finish, target, lens, frames):
@@ -139,13 +147,17 @@ def town(frames):
             trunk_y = y+2.35
             box("Tree trunk", (side*4.1, trunk_y, .68), (.24, .24, 1.36), roof)
             box("Tree crown", (side*4.1, trunk_y, 1.62), (.9, .95, 1.08), leaf, .18)
-    kid, head, arms = actor("Narrator", (.05, -.3, .05), teal, brown, peach)
+    kid, _, arms, legs = actor("Narrator", (.05, -.3, .05), teal, brown, peach)
     keys(kid, "location", [(1, (.05, -.3, .05)), (frames, (.05, -1.1, .05))])
-    for index, arm in enumerate(arms):
-        swing = (-1)**index*.30
-        keys(arm, "rotation_euler", [(1, (swing, 0, 0)), (frames//2, (-swing, 0, 0)), (frames, (swing, 0, 0))])
+    for limbs, amplitude in ((arms, .29), (legs, -.23)):
+        for index, limb in enumerate(limbs):
+            swing = (-1)**index * amplitude
+            values = [(frame, (angle, 0, 0)) for frame, angle in
+                      ((1, swing), (frames//4, -swing), (frames//2, swing),
+                       (3*frames//4, -swing), (frames, swing))]
+            keys(limb, "rotation_euler", values)
     light("SUN", (4, -5, 8), 2.0, (1, .88, .68), (0, 0, 0), 0)
-    camera((3.4, -7, 3.1), (2.8, -6.1, 2.8), (0, 1, 1.55), 32, frames)
+    camera((2.6, -6.3, 2.65), (1.9, -5.6, 2.5), (0, .15, 1.45), 33, frames)
 
 
 def hallway(action, frames):
@@ -163,6 +175,9 @@ def hallway(action, frames):
     box("Back wall left", (-2.03, 2.65, 2), (2.06, .21, 4), wall)
     box("Back wall right", (2.03, 2.65, 2), (2.06, .21, 4), wall)
     box("Wall above door", (0, 2.65, 3.45), (2.02, .21, 1.1), wall)
+    if action == "appear":
+        cover = box("Wall before the door", (0, 2.65, 1.45), (2.04, .21, 2.93), wall)
+        keys(cover, "scale", [(1, (1, 1, 1)), (frames//3, (.01, 1, 1))])
     box("Dark passage", (0, 3.85, 1.5), (2.9, .21, 3), opening)
     box("Console", (-2.25, 1.84, .86), (1.13, .52, .12), brown)
     for x in (-2.7, -1.8):
@@ -172,8 +187,8 @@ def hallway(action, frames):
     for x in (-2.1, 2.08):
         box("Picture frame", (x, 2.51, 2.23), (.7, .08, .82), cream)
         box("Picture", (x, 2.45, 2.23), (.51, .06, .63), coral if x < 0 else teal)
-    kid, kid_head, kid_arms = actor("Narrator", (-1.13, .15, 0), teal, brown, peach, .36)
-    mom, mom_head, mom_arms = actor("Mom", (1.1, .78, 0), coral, ink, peach, -.38)
+    _, kid_head, kid_arms, _ = actor("Narrator", (-1.13, .15, 0), teal, brown, peach, .36)
+    mom, mom_head, _, _ = actor("Mom", (1.1, .78, 0), coral, ink, peach, -.38)
     mom.scale = (1.1,)*3
     keys(kid_head, "rotation_euler", [(1, (0, 0, -.10)), (frames, (.11, 0, .37))])
     keys(mom_head, "rotation_euler", [(1, (.04, 0, 0)), (frames, (-.12, 0, -.28))])
@@ -205,7 +220,7 @@ def hallway(action, frames):
                 keys(hinge, "rotation_euler", [(1, (0, 0, 0)), (frames//3, (0, 0, angle)), (frames, (0, 0, angle))])
             else:
                 hinge.rotation_euler.z = angle
-            double, double_head, double_arms = actor("Double", (.18, 3.03, .06), teal, brown, peach, -.13)
+            double, _, double_arms, _ = actor("Double", (.18, 3.03, .06), teal, brown, peach, -.13)
             prop = clock("Ticking clock", (.1, -.44, 1.38), .7)
             prop.parent = double
             keys(double, "location", [(1, (.18, 3.03, .06)), (frames, (.18, 1.91, .06))])
@@ -237,7 +252,10 @@ frames = max(12, int(duration))
 bpy.ops.wm.read_factory_settings(use_empty=True)
 scene = bpy.context.scene
 scene.world = bpy.data.worlds.new("Sky")
-scene.world.color = (.32, .37, .47)
+scene.world.use_nodes = True
+sky = scene.world.node_tree.nodes.get("Background")
+sky.inputs["Color"].default_value = (.32, .48, .76, 1)
+sky.inputs["Strength"].default_value = .65
 scene.render.engine = "CYCLES"
 scene.cycles.samples = 8
 scene.cycles.use_denoising = True

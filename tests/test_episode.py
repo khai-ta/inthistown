@@ -19,6 +19,10 @@ class EpisodeTests(unittest.TestCase):
         self.assertTrue(shots[0]["line"].startswith("In this town,"))
         self.assertEqual(shots[0]["action"], "market_street")
         self.assertEqual(len(shots), len({shot["action"] for shot in shots}))
+        script = " ".join(shot["line"] for shot in shots)
+        for name in ("Khai", "Leo", "Prakhar", "Nikhil", "Kyle", "Michael"):
+            self.assertRegex(script, rf"\b{name}\b")
+        self.assertLess(script.index("The board flashed No"), script.index("That one settled yes"))
 
     def test_unknown_actions_fail_before_rendering(self):
         with tempfile.TemporaryDirectory() as tmp:

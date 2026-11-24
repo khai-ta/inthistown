@@ -1,0 +1,15 @@
+{
+  "title": "A Party for Two",
+  "avatar": "roblox-r15",
+  "style": "shorts",
+  "shots": [
+    {"action":"party_street","line":"In this town, everyone goes out partying except me. At nine, every porch turned pink. Mine stayed dark."},
+    {"action":"party_bedroom","line":"I used to wave from my bedroom. Tonight I shut the curtains. I was tired of watching a party I wasn't invited to."},
+    {"action":"party_knock","line":"Then someone knocked. It was Michael, holding a busted speaker and two cups."},
+    {"action":"party_invite","line":"I told him you need people to have a party. He looked around my living room and said, I count two."},
+    {"action":"party_power","line":"I plugged in his speaker. Nothing. Outside, every porch light went out. The whole street had lost power."},
+    {"action":"party_beat","line":"Michael tapped his cup. I tapped mine back. Then I opened the front door so our beat could reach the street."},
+    {"action":"party_lantern","line":"He set his little battery lantern on the step. Our porch was the only one still glowing. So we danced."},
+    {"action":"party_end","line":"When the street lit back up, Michael asked if I wanted to go out. I said, we already are. And we kept dancing."}
+  ]
+}

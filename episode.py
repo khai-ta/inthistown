@@ -3,7 +3,9 @@
 import json
 from pathlib import Path
 
-ACTIONS = {"town", "lie", "appear", "knock", "open", "twist", "clock", "twin", "key", "escape", "dusk", "streetdoor"}
+MARKET_ACTIONS = {"market_hook", "market_street", "market_win", "market_ticket", "market_friend",
+                  "market_mayor", "market_count", "market_trade", "market_blackout", "market_end"}
+ACTIONS = {"town", "lie", "appear", "knock", "open", "twist", "clock", "twin", "key", "escape", "dusk", "streetdoor"} | MARKET_ACTIONS
 
 
 def read_episode(path):

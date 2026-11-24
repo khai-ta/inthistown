@@ -13,9 +13,9 @@ import wave
 
 from dotenv import dotenv_values
 
-from episode import read_episode
+from episode import MARKET_ACTIONS, read_episode
 from eleven_voice import ADAM_VOICE, DEFAULT_MODEL, DEFAULT_VOICE, speak
-from fetch_avatar import TARGET as AVATAR_FILE
+from fetch_avatar import MARKET_ASSETS, TARGET as AVATAR_FILE
 
 ROOT = Path(__file__).resolve().parent
 SAMPLE_RATE = 48000
@@ -122,7 +122,12 @@ def narration(args, shots, index, work, tracks):
 
 
 def sound_effect(path, action, duration):
-    if action == "lie":
+    if action in {"market_win", "market_trade", "market_end"}:
+        cues = [(duration * .31 + i*.068, pitch, .17, .115) for i, pitch in
+                enumerate((392, 523, 659) if action != "market_end" else (466, 349, 196))]
+    elif action in {"market_hook", "market_count", "market_blackout"}:
+        cues = [(duration * fraction, 78, .23, .15) for fraction in (.15, .52, .73, .87)]
+    elif action == "lie":
         cues = [(.025, 91, .18, .10)]
     elif action == "knock":
         cues = [(duration * t, 115, .20, .16) for t in (.37, .53, .69)]
@@ -154,6 +159,10 @@ def sound_effect(path, action, duration):
 
 
 def cut_effects(action, first_frame, frames, fps):
+    if action in {"market_blackout", "market_win", "market_trade"}:
+        beat = first_frame + round(frames * (.48 if action == "market_blackout" else .31))
+        fill = "black@.78" if action == "market_blackout" else "gold@.23"
+        return [f"drawbox=c={fill}:t=fill:enable='between(n,{beat},{beat+1})'"]
     if action == "appear":
         impact = first_frame + max(2, frames // 3) - 1
         return [f"drawbox=c=white@.28:t=fill:enable='eq(n,{impact})'",
@@ -181,6 +190,9 @@ def render_episode(args):
     episode = read_episode(episode_path)
     if episode.get("avatar") == "roblox-r15" and not AVATAR_FILE.is_file():
         raise ValueError("Run python fetch_avatar.py to download Roblox’s blocky R15 rig")
+    if any(shot["action"] in MARKET_ACTIONS for shot in episode["shots"]):
+        if not all(AVATAR_FILE.with_name(name + ".fbx").is_file() for name in MARKET_ASSETS):
+            raise ValueError("Run python fetch_avatar.py --market to download the market cast")
     shorts_style = episode.get("style") == "shorts"
     tracks = imported_tracks(args.narration_dir.resolve(), len(episode["shots"])) if args.narration_dir else []
     output.parent.mkdir(parents=True, exist_ok=True)

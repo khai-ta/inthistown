@@ -1,0 +1,17 @@
+{
+  "title": "Everybody Bet Yes",
+  "avatar": "roblox-r15",
+  "style": "shorts",
+  "shots": [
+    {"action":"market_hook","line":"I won a million dollars on Kalshi. Ten seconds later, nobody in town remembered my name."},
+    {"action":"market_street","line":"In this town, everyone bet on Kalshi to get rich. Sunrise? Yes. School canceled? Yes. Even the mayor had odds."},
+    {"action":"market_win","line":"My neighbor bet the fountain would turn gold. It did. She bought the fountain before the water even came down."},
+    {"action":"market_ticket","line":"Then a market popped up with my name on it. Will Milo disappear by midnight? Yes was at ninety-nine cents."},
+    {"action":"market_friend","line":"My friend Jules slammed my phone down. Last week, she said, they bet I'd lose my voice. I still can't sing."},
+    {"action":"market_mayor","line":"I ran to the mayor. He showed me the fine print. Disappear didn't mean die. It meant nobody would remember me."},
+    {"action":"market_count","line":"Everyone in town had already bet yes. My dad was outside selling raffle tickets for my own disappearance."},
+    {"action":"market_trade","line":"I could take the million and vanish, or give it all up. So I bet no, with the only dollar I had left."},
+    {"action":"market_blackout","line":"Midnight. The board went black. Jules looked right through me. Then she said my name, and the entire town gasped."},
+    {"action":"market_end","line":"I'd found the loophole. Jules never bet on me. Then my phone buzzed. Will Milo tell anyone? The town was already voting yes."}
+  ]
+}

@@ -178,6 +178,33 @@ def camera(start, finish, target, lens, frames):
         cam.rotation_euler = (Vector(target) - cam.location).to_track_quat("-Z", "Y").to_euler()
         cam.keyframe_insert(data_path="location", frame=frame)
         cam.keyframe_insert(data_path="rotation_euler", frame=frame)
+    if not shorts_style:
+        return
+    inserts = {
+        "town": ((-1.9, -1.8, 1.94), (-.13, -.55, 1.89), 52, .50),
+        "lie": ((-.02, -1.68, 2.02), (-1.13, .15, 1.77), 48, .46),
+        "appear": ((-.28, -.64, 1.95), (.05, 2.43, 1.56), 53, .54),
+        "twist": ((1.12, -1.86, 2.19), (1.21, .78, 2.12), 53, .68),
+        "escape": ((.56, -4.15, 1.55), (-.11, -1.62, 1.31), 38, .58),
+        "dusk": ((-2.10, -2.40, 2.15), (-.51, -.42, 1.86), 47, .44),
+        "streetdoor": ((.18, -1.68, 1.88), (0, .6, 1.52), 45, .68),
+    }
+    if shot["action"] not in inserts:
+        return
+    close_pos, close_target, close_lens, cut = inserts[shot["action"]]
+    frame = max(3, int(frames * cut))
+    scene.frame_set(frame - 1)
+    cam.keyframe_insert(data_path="location", frame=frame-1)
+    cam.keyframe_insert(data_path="rotation_euler", frame=frame-1)
+    cam.data.keyframe_insert(data_path="lens", frame=frame-1)
+    for f in (frame, frames):
+        cam.location = close_pos
+        cam.rotation_euler = (Vector(close_target) - cam.location).to_track_quat("-Z", "Y").to_euler()
+        cam.data.lens = close_lens
+        cam.keyframe_insert(data_path="location", frame=f)
+        cam.keyframe_insert(data_path="rotation_euler", frame=f)
+        cam.data.keyframe_insert(data_path="lens", frame=f)
+    scene.frame_set(1)
 
 
 def light(kind, pos, power, color, target, size):
@@ -290,7 +317,22 @@ def town(frames, action):
                           ((1, swing), (walk_end//4, -swing), (walk_end//2, swing),
                            (3*walk_end//4, -swing), (walk_end, 0 if action == "streetdoor" else swing))]
                 keys(limb, "rotation_euler", values)
-    light("SUN", (4, -5, 8), 2.0, (1, .88, .68), (0, 0, 0), 0)
+    if shorts_style:
+        sky.inputs["Color"].default_value = (.065, .13, .34, 1)
+        light("SUN", (4, -5, 8), .85, (.62, .76, 1), (0, 0, 0), 0)
+        glow = material("Lamp glass", (1.0, .71, .24))
+        shader = glow.node_tree.nodes.get("Principled BSDF")
+        shader.inputs["Emission Color"].default_value = (1, .66, .18, 1)
+        shader.inputs["Emission Strength"].default_value = 2.4
+        pole = material("Street lamp pole", (.054, .069, .10))
+        for x, y in ((-3.55, 1.9), (3.55, 7.4), (-3.55, 14.7)):
+            box("Street lamp", (x, y, 1.75), (.105, .105, 3.5), pole)
+            box("Lamp housing", (x, y, 3.46), (.43, .44, .22), pole)
+            box("Lamp glass", (x, y, 3.34), (.34, .35, .06), glow)
+            light("AREA", (x, y, 3.26), 110, (1, .73, .42), (x, y, 0), 1.1)
+        light("AREA", (2.0, -3.4, 3.0), 160, (.77, .84, 1), (0, 0, 1.25), 3)
+    else:
+        light("SUN", (4, -5, 8), 2.0, (1, .88, .68), (0, 0, 0), 0)
     if action == "streetdoor":
         camera((2.4, -4.9, 2.8), (1.7, -4.1, 2.6), (0, .3, 1.22), 34, frames)
     elif action == "dusk":
@@ -444,6 +486,7 @@ def hallway(action, frames):
 episode_path, index, duration, width, fps, engine, target = sys.argv[sys.argv.index("--")+1:]
 episode = read_episode(episode_path)
 avatar = episode.get("avatar")
+shorts_style = episode.get("style") == "shorts"
 shot = episode["shots"][int(index)]
 frames = max(12, int(duration))
 bpy.ops.wm.read_factory_settings(use_empty=True)
@@ -454,11 +497,13 @@ sky = scene.world.node_tree.nodes.get("Background")
 sky.inputs["Color"].default_value = (.32, .48, .76, 1)
 sky.inputs["Strength"].default_value = .65
 scene.render.engine = engine
-scene.eevee.taa_render_samples = 16
+scene.eevee.taa_render_samples = 8 if shorts_style else 16
 scene.render.use_persistent_data = True
 scene.cycles.samples = 8
 scene.cycles.use_denoising = True
 scene.view_settings.view_transform = "AgX"
+if shorts_style:
+    scene.view_settings.look = "AgX - Medium High Contrast"
 scene.render.resolution_x = int(width)
 scene.render.resolution_y = round(int(width)*16/9/2)*2
 scene.render.resolution_percentage = 100

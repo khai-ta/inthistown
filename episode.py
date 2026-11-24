@@ -12,6 +12,8 @@ def read_episode(path):
         raise ValueError("Episode must be an object")
     if episode.get("avatar") not in (None, "roblox-r15"):
         raise ValueError("Unsupported avatar type")
+    if episode.get("style") not in (None, "shorts"):
+        raise ValueError("Unsupported edit style")
     title = episode.get("title")
     if not isinstance(title, str) or not title.strip():
         raise ValueError("Episode needs a title")

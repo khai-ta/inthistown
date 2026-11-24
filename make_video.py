@@ -52,7 +52,7 @@ def caption_time(seconds):
     return f"{hours}:{minutes:02}:{whole:02}.{fraction:02}"
 
 
-def captions(line, seconds, offset, words=None):
+def captions(line, seconds, offset, words=None, single_word=False):
     if not words:
         tokens = line.split()
         step = seconds / len(tokens)
@@ -61,7 +61,7 @@ def captions(line, seconds, offset, words=None):
     current = []
     for word, start, end in words:
         word = word.replace("{", "(").replace("}", ")").replace(chr(92), "/")
-        if current and (len(current) >= 5 or len(" ".join(item[0] for item in current) + " " + word) > 23):
+        if current and (single_word or len(current) >= 5 or len(" ".join(item[0] for item in current) + " " + word) > 23):
             groups.append(current)
             current = []
         current.append((word, start, end))
@@ -171,6 +171,7 @@ def render_episode(args):
     episode = read_episode(episode_path)
     if episode.get("avatar") == "roblox-r15" and not AVATAR_FILE.is_file():
         raise ValueError("Run python fetch_avatar.py to download Roblox’s blocky R15 rig")
+    shorts_style = episode.get("style") == "shorts"
     tracks = imported_tracks(args.narration_dir.resolve(), len(episode["shots"])) if args.narration_dir else []
     output.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix=".episode-", dir=output.parent) as temp:
@@ -185,7 +186,7 @@ def render_episode(args):
             speech, words = narration(args, episode["shots"], index, work, tracks)
             frames = max(12, math.ceil((speech + PAD_START + PAD_END) * args.fps))
             duration = frames / args.fps
-            events.extend(captions(shot["line"], speech, total_frames / args.fps, words))
+            events.extend(captions(shot["line"], speech, total_frames / args.fps, words, shorts_style))
             stem = f"shot-{index:03d}-"
             with (work / "render.log").open("w") as log:
                 result = subprocess.run([
@@ -218,7 +219,10 @@ def render_episode(args):
                 with wave.open(str(path), "rb") as part:
                     file.writeframes(part.readframes(part.getnframes()))
         (work / "clips.txt").write_text("\n".join(clips) + "\n")
-        (work / "captions.ass").write_text(CAPTION_HEADER + "\n".join(events) + "\n", encoding="utf-8")
+        caption_header = CAPTION_HEADER
+        if shorts_style:
+            caption_header = caption_header.replace("Arial,43", "Arial,44").replace(",2,45,55,195,1", ",2,45,55,446,1")
+        (work / "captions.ass").write_text(caption_header + "\n".join(events) + "\n", encoding="utf-8")
         ffmpeg("-f", "concat", "-safe", "1", "-i", "clips.txt", "-i", "narration.wav",
                "-map", "0:v", "-map", "1:a", "-vf", ",".join(flashes + ["ass=captions.ass"]),
                "-c:v", "libx264", "-crf", "17", "-pix_fmt", "yuv420p", "-c:a", "aac",

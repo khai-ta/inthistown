@@ -734,8 +734,10 @@ def market_school(frames, m):
     for i in range(14):
         dot = box("Snow flurry", ((i*13%37)/7-2.4, .6+(i%3)*.35, 2.4), (.034, .035, .043), cream, .006)
         keys(dot, "location", [(1, dot.location.copy()), (frames, (dot.location.x+.2, dot.location.y, .05+i*.15))])
-    market_camera(frames, [(0,(-.52,-12.6,8.35),(0,-.26,1.2),33),
-                            (.42,(-3.43,-6.5,3.65),(0,.7,1.26),37),
+    market_camera(frames, [(0,(9.55,-16.8,10.4),(-.68,-.94,1.21),33),
+                            (.29,(6.22,-13.71,7.55),(-.15,-.31,1.25),36),
+                            (.30,(-3.43,-6.5,3.65),(0,.7,1.26),37),
+                            (.42,(-3.05,-5.88,3.21),(0,.70,1.25),37),
                             (.43,(3.65,-4.80,2.0),(1.18,-.28,1.20),44),
                             (1,(3.15,-3.73,1.82),(1.2,-.32,1.20),48)])
 
@@ -1078,31 +1080,67 @@ def market_crowd(entries, frames):
         market_character_motion(person,frames,poses)
 
 
+def school_town_grid(frames, paints, m):
+    asphalt = material("Residential asphalt", (.090,.110,.127))
+    edge = material("Curbs and sidewalks", (.52,.51,.48))
+    x_roads = (-6.24, 6.24)
+    y_roads = (-9.6, -3.05, 6.73)
+    for x in x_roads:
+        box("North-south street", (x,-3.1,-.026),(2.85,28.1,.048),asphalt,.005)
+        for y in range(-14,11):
+            if all(abs(y-road) > 2.05 for road in y_roads):
+                box("North-south center dash",(x,y,.010),(.065,.52,.016),yellow,.004)
+        for side in (-1,1):
+            for y,length in ((-6.32,3.52),(1.87,6.75),(9.43,2.22)):
+                box("Curb sidewalk",(x+side*1.70,y,.016),(.52,length,.09),edge,.016)
+    for y in y_roads:
+        box("East-west street",(0,y,-.018),(34,2.93,.055),asphalt,.005)
+        for x in range(-15,16):
+            if all(abs(x-road)>1.95 for road in x_roads):
+                box("East-west center dash",(x,y,.020),(.50,.065,.014),yellow,.004)
+        for side in (-1,1):
+            for x,length in ((-11.25,6.65),(0,9.10),(11.22,6.65)):
+                box("Raised sidewalk",(x,y+side*1.73,.017),(length,.52,.093),edge,.017)
+    for x in x_roads:
+        for side in (-1,1):
+            for i in range(6):
+                box("Painted crosswalk",(x+(i-2.5)*.40,-3.05+side*1.78,.030),
+                    (.23,.47,.012),cream,.005)
+            box("Stop line",(x,-3.05+side*2.20,.028),(2.2,.07,.015),cream,.004)
+    for row, y in enumerate((-6.25, -.32, 3.39, 9.6)):
+        columns = (-12.0,-9.07,-3.4,.05,3.34,9.05,12.04) if row in {0,3} else (-12,-9.08,9.04,12.0)
+        for i,x in enumerate(columns):
+            town_house(x,y,0,2.20+.19*(i%2),paints[(i+row*2)%len(paints)],m)
+            tree_x = x + (.87 if i%2 else -.89)
+            town_tree(tree_x,y-1.22,.71+.09*(i%3),m)
+            box("Driveway",(x+.76,y-1.66,.005),(.71,1.12,.033),edge,.013)
+    for x,y in ((-4.42,-4.85),(-8.00,-4.77),(4.44,-4.85),(8.02,-4.85),
+                (-4.45,4.55),(8.02,4.6),(4.45,4.60)):
+        town_lamp(x,y,m)
+    for x in (-2.18,2.15):
+        for i in range(5):
+            box("School fence post",(x+(.38*i if x>0 else -.38*i),-.63,.33),
+                (.09,.12,.65),cream,.009)
+        box("School fence rail",(x+(.76 if x>0 else -.76),-.62,.49),(1.63,.07,.093),cream,.008)
+
+    traffic = [
+        ((-12.2,-3.69,0),(12.5,-3.69,0),1.571,m["glass"]),
+        ((11.4,-2.39,0),(-11.8,-2.39,0),-1.571,m["brick"]),
+        ((-6.86,-14.2,0),(-6.86,-4.95,0),3.142,m["sand"]),
+        ((6.86,10.3,0),(6.86,-.77,0),0,m["mint"]),
+        ((9.8,6.14,0),(-10.4,6.14,0),-1.571,m["violet"]),
+    ]
+    for start,end,heading,paint in traffic:
+        car = town_car(start[0],start[1],heading,paint,m)
+        keys(car,"location",[(1,start),(frames,end)])
+
+
 def market_neighborhood(action,frames,m):
     paints = (m["brick"],m["glass"],m["sand"],m["mint"],m["violet"])
     if action in {"market_street","market_win"}:
         box("Town ground", (0,6,-.27), (72,72,.43), m["grass"])
         if action == "market_street":
-            box("Residential street",(0,-7.47,-.021),(2.83,12.12,.037),m["navy"],.012)
-            for side in (-1,1):
-                box("Residential sidewalk",(side*1.72,-7.51,.028),(.60,11.95,.071),m["concrete"],.019)
-                for row,y in enumerate((-9.67,-6.63,-3.84,-.93)):
-                    town_house(side*(4.45-.23*(row%2)),y,0,2.28,
-                               paints[(row+int(side>0)*2)%len(paints)],m)
-                    town_tree(side*2.54,y+.46,.73,m)
-                    town_lamp(side*2.08,y+.39,m)
-            northbound = town_car(.61,-8.91,3.1416,m["glass"],m)
-            southbound = town_car(-.62,-1.68,0,m["brick"],m)
-            keys(northbound,"location",[(1,(.61,-8.91,0)),(int(frames*.51),(.61,-1.80,0)),(frames,(.61,-1.8,0))])
-            keys(southbound,"location",[(1,(-.62,-1.68,0)),(int(frames*.53),(-.62,-8.9,0)),(frames,(-.62,-9,0))])
-            for y in (-11.1,-9.8,-8.5,-7.2,-5.9,-4.6,-3.3,-2.0):
-                box("Residential road stripe",(0,y,.013),(.085,.64,.023),yellow,.004)
-            for index,x in enumerate((-8.5,-5.7,-2.6,.34,3.16,6.08,9.21)):
-                town_house(x,8.7+(index%2)*.38,0,2.24,paints[(index+2)%5],m)
-            for side in (-1,1):
-                for post in range(5):
-                    box("School fence post",(side*(2.53+.38*post),-.55,.30),(.09,.11,.59),cream,.01)
-                box("School fence rail",(side*3.30,-.55,.44),(1.65,.065,.091),cream,.009)
+            school_town_grid(frames,paints,m)
         else:
             for i,x in enumerate((-8.2,-5.75,5.55,8.02)):
                 town_house(x,5.9+(i%2)*.54,0,2.23,paints[i],m)
@@ -1111,14 +1149,16 @@ def market_neighborhood(action,frames,m):
         for x in (-4.3,4.33):
             town_lamp(x,.87,m)
         if action == "market_street":
-            box("Parking bay",(2.66,-2.08,-.008),(1.25,2.26,.037),m["concrete"],.012)
-            town_car(2.66,-2.08,0,m["brick"],m)
+            box("Parking bay",(3.62,.37,-.008),(1.25,2.26,.037),m["concrete"],.012)
+            town_car(3.62,.37,0,m["brick"],m)
         else:
             town_car(3.85,-.92,.44,m["brick"],m)
         town_bench(-3.29,.9,m)
         if action == "market_street":
             entries=[(-2.82,1.29,.48,"walk"),(3.25,1.28,-.37,"talk"),
-                     (-3.28,-.51,.39,"walk"),(3.9,1.48,-.52,"talk")]
+                     (-3.28,-.51,.39,"walk"),(3.9,1.48,-.52,"talk"),
+                     (8.34,-4.81,.62,"walk"),(-8.3,-1.29,-.48,"walk"),
+                     (-2.42,-7.79,-.32,"walk"),(2.17,-7.74,.42,"talk")]
         else:
             entries=[(-2.97,1.07,.54,"react"),(2.21,1.19,-.55,"react"),
                      (1.61,2.1,-.34,"react"),(.16,2.67,.12,"talk"),(-3.45,.25,.94,"walk")]
@@ -1176,6 +1216,14 @@ def market_sky(is_day, outdoors):
     shader.inputs["Emission Strength"].default_value = .7 if is_day else 2.1
     ellipses = []
     if is_day:
+        light("SUN",(-10,-4,14),1.25,(1,.88,.71),(0,3,0),0)
+        sun = material("Warm sun",(1,.66,.25))
+        emitter = sun.node_tree.nodes.get("Principled BSDF")
+        emitter.inputs["Emission Color"].default_value = (1,.73,.35,1)
+        emitter.inputs["Emission Strength"].default_value = 3.8
+        bpy.ops.mesh.primitive_uv_sphere_add(segments=24,ring_count=12,location=(6.7,29,13.2))
+        bpy.context.object.scale = (.78,)*3
+        bpy.context.object.data.materials.append(sun)
         for cx,cy,cz in ((-9,15,8.7),(4.7,19,9.4),(10,26,11.7),(-2.4,24,10.6)):
             for i in range(5):
                 ellipses.append(((cx+(i-2)*.91,cy+(i%2)*.39,cz+.28*(i%3)),

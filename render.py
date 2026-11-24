@@ -871,7 +871,13 @@ def market_office(frames,m):
 
 def market_side_street(m):
     box("Street",(0,0,-.17),(17,15,.29),m["navy"])
-    box("Pavement",(0,2.48,.02),(16,3.1,.12),m["concrete"])
+    for side in (-1,1):
+        box("Pavement",(side*4.70,2.48,.02),(6.6,3.1,.12),m["concrete"])
+    box("Cross street",(0,5.41,-.014),(2.68,8.3,.04),m["navy"],.008)
+    for y in (3.3,4.6,5.9,7.2,8.5):
+        box("Cross street center line",(0,y,.013),(.07,.59,.014),yellow,.004)
+    for i in range(5):
+        box("Side street crosswalk",((i-2)*.43,2.39,.024),(.23,.44,.015),cream,.004)
     for x in (-4.8,-2.35,2.35,4.8):
         box("Shop wall",(x,4.41,1.72),(2.3,1.9,3.43),m["brick"] if x > 0 else m["violet"])
         box("Window",(x,3.43,1.85),(1.52,.07,.95),m["glass"])
@@ -1164,7 +1170,7 @@ def market_neighborhood(action,frames,m):
                      (1.61,2.1,-.34,"react"),(.16,2.67,.12,"talk"),(-3.45,.25,.94,"walk")]
         market_crowd(entries,frames)
     elif action in {"market_count","market_blackout","market_hook"}:
-        for i,x in enumerate((-8.3,-5.7,-3.23,-.72,1.84,4.66,7.27)):
+        for i,x in enumerate((-8.3,-5.7,-3.23,3.01,5.39,7.97)):
             town_house(x,7.5+(i%2)*.52,0,2.30,paints[i%5],m)
         for x in (-4.65,4.78):
             town_tree(x,2.03,1.08,m)

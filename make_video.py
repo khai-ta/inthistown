@@ -203,6 +203,17 @@ def render_episode(args):
     print(output)
 
 
+def elevenlabs_key():
+    key = os.environ.get("ELEVENLABS_API_KEY", "").strip()
+    if key or sys.platform != "darwin":
+        return key
+    result = subprocess.run(
+        ["security", "find-generic-password", "-s", "inthistown-elevenlabs", "-w"],
+        stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, check=False,
+    )
+    return result.stdout.decode().strip() if result.returncode == 0 else ""
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("episode", type=Path)
@@ -217,10 +228,10 @@ def main():
     parser.add_argument("--engine", choices=("eevee", "cycles"), default="eevee")
     parser.add_argument("--blender", default="blender")
     args = parser.parse_args()
-    args.api_key = os.environ.get("ELEVENLABS_API_KEY")
+    args.api_key = elevenlabs_key() if args.provider != "local" else ""
     args.provider = args.provider or ("elevenlabs" if args.api_key else "local")
     if args.provider == "elevenlabs" and not args.api_key:
-        parser.error("Set ELEVENLABS_API_KEY to render with ElevenLabs")
+        parser.error("Set ELEVENLABS_API_KEY or add the inthistown-elevenlabs Keychain entry")
     dependencies = [args.blender, "ffmpeg"]
     if args.provider == "local":
         dependencies.append("say")

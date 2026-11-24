@@ -70,9 +70,7 @@ def roblox_actor(name, pos, shirt, hair, yaw, adult):
         bpy.data.objects.remove(obj, do_unlink=True)
     for mesh in meshes:
         body = mesh.name.split(".")[0]
-        if body == "Head_Geo":
-            continue
-        color = shirt
+        color = peach if body == "Head_Geo" else shirt
         if "Leg" in body:
             color = denim
         elif "Foot" in body:
@@ -91,12 +89,27 @@ def roblox_actor(name, pos, shirt, hair, yaw, adult):
     legs = [armature.pose.bones[side + "UpperLeg"] for side in ("Right", "Left")]
     for bone in [head, *arms, *legs]:
         bone.rotation_mode = "XYZ"
+    face = group("Face details", (0, 0, 0))
+    face.parent = rig
+    for x in (-.089, .089):
+        piece(face, "Eye", (x, -.256, 2.008), (.038, .018, .054), ink, .008)
+        piece(face, "Brow", (x, -.249, 2.074), (.075, .018, .018), hair, .006)
+    piece(face, "Mouth", (0, -.253, 1.904), (.105, .025, .027), ink, .008)
     cap = piece(rig, "Side-part hair" if adult else "Swept hair", (0, .035, 2.15), (.51, .48, .125), hair)
     if adult:
         piece(rig, "Bob", (0, .19, 1.97), (.53, .20, .40), hair, .06)
     else:
         cap.rotation_euler.y = -.13
         piece(rig, "Fringe", (-.13, -.177, 2.105), (.25, .11, .145), hair)
+    bpy.context.view_layer.update()
+    for accessory in list(rig.children):
+        if accessory == armature:
+            continue
+        world = accessory.matrix_world.copy()
+        accessory.parent = armature
+        accessory.parent_type = "BONE"
+        accessory.parent_bone = head.name
+        accessory.matrix_world = world
     return rig, head, arms, legs
 
 

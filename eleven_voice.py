@@ -27,7 +27,7 @@ def speak(key, voice, model, line, previous, following):
     except ApiError as error:
         raise RuntimeError(f"ElevenLabs returned HTTP {error.status_code}. Check your API key, voice ID, and credits.") from error
     try:
-        audio = base64.b64decode(result.audio_base64, validate=True)
+        audio = base64.b64decode(result.audio_base_64, validate=True)
     except (TypeError, ValueError) as error:
         raise RuntimeError("ElevenLabs returned invalid audio") from error
     if not audio:

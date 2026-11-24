@@ -12,7 +12,7 @@ class ElevenVoiceTests(unittest.TestCase):
     def test_speech_request_and_caption_timing(self, client):
         convert = client.return_value.text_to_speech.convert_with_timestamps
         convert.return_value = SimpleNamespace(
-            audio_base64=base64.b64encode(b"audio").decode(),
+            audio_base_64=base64.b64encode(b"audio").decode(),
             normalized_alignment=None,
             alignment=SimpleNamespace(model_dump=lambda: {
                 "characters": list("Hi. Run."),

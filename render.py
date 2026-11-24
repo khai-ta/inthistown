@@ -728,8 +728,10 @@ def market_school(frames, m):
     for i in range(14):
         dot = box("Snow flurry", ((i*13%37)/7-2.4, .6+(i%3)*.35, 2.4), (.034, .035, .043), cream, .006)
         keys(dot, "location", [(1, dot.location.copy()), (frames, (dot.location.x+.2, dot.location.y, .05+i*.15))])
-    market_camera(frames, [(0,(-6.7,-8.2,6.3),(0,1,1.2),35), (.42,(-4.3,-6.3,3.65),(0,.7,1.26),37),
-                            (.43,(3.65,-4.80,2.0),(1.18,-.28,1.20),44), (1,(3.15,-3.73,1.82),(1.2,-.32,1.20),48)])
+    market_camera(frames, [(0,(-.52,-12.6,8.35),(0,-.26,1.2),33),
+                            (.42,(-3.43,-6.5,3.65),(0,.7,1.26),37),
+                            (.43,(3.65,-4.80,2.0),(1.18,-.28,1.20),44),
+                            (1,(3.15,-3.73,1.82),(1.2,-.32,1.20),48)])
 
 
 def market_fountain(frames, m):
@@ -1056,9 +1058,24 @@ def market_neighborhood(action,frames,m):
     paints = (m["brick"],m["glass"],m["sand"],m["mint"],m["violet"])
     if action in {"market_street","market_win"}:
         box("Town ground", (0,9,-.24), (30,27,.41), m["grass"])
-        start = 6.5 if action == "market_street" else 5.9
-        for i,x in enumerate((-8.2,-5.75,5.55,8.02)):
-            town_house(x,start+(i%2)*.54,0,2.23,paints[i],m)
+        if action == "market_street":
+            box("Residential street",(0,-5.15,-.021),(2.83,7.5,.037),m["navy"],.012)
+            for side in (-1,1):
+                box("Residential sidewalk",(side*1.72,-5.27,.028),(.60,7.5,.071),m["concrete"],.019)
+                for row,y in enumerate((-6.63,-3.84,-.93)):
+                    town_house(side*(4.45-.23*(row%2)),y,0,2.28,
+                               paints[(row+int(side>0)*2)%len(paints)],m)
+                    town_tree(side*2.54,y+.46,.73,m)
+                    town_lamp(side*2.08,y+.39,m)
+            for y in (-7.2,-5.9,-4.6,-3.3,-2.0):
+                box("Residential road stripe",(0,y,.013),(.085,.64,.023),yellow,.004)
+            for side in (-1,1):
+                for post in range(5):
+                    box("School fence post",(side*(2.53+.38*post),-.55,.30),(.09,.11,.59),cream,.01)
+                box("School fence rail",(side*3.30,-.55,.44),(1.65,.065,.091),cream,.009)
+        else:
+            for i,x in enumerate((-8.2,-5.75,5.55,8.02)):
+                town_house(x,5.9+(i%2)*.54,0,2.23,paints[i],m)
         for x,y,s in ((-4.4,1.28,1.15),(4.2,1.92,1.12),(-5.9,3.8,1),(5.3,3.8,1.04)):
             town_tree(x,y,s,m)
         for x in (-4.3,4.33):

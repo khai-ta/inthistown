@@ -1181,7 +1181,7 @@ def market_neighborhood(action,frames,m):
     if action == "market_street":
         market_crowd([(-2.76,.75,.48,"walk"),(3.24,.87,-.37,"talk"),
                       (-3.68,-.05,.39,"walk"),(4.1,.6,-.52,"talk"),
-                      (-7.62,-3.77,.39,"walk"),(5.61,-2.35,.3,"walk")],frames)
+                      (-7.62,-5.38,.39,"walk"),(5.61,-.48,.3,"walk")],frames)
     elif action == "market_win":
         market_crowd([(-2.97,1.07,.54,"react"),(2.21,1.19,-.55,"react"),
                       (1.61,2.1,-.34,"react"),(.16,2.67,.12,"talk"),(-3.45,.25,.94,"walk")],frames)

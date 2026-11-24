@@ -1,5 +1,6 @@
 """Build and render a shot with Blender's embedded Python."""
 
+import math
 from pathlib import Path
 import sys
 
@@ -549,12 +550,13 @@ def market_gesture(character, frames, energy, offset=0):
 
 def market_camera(action, frames):
     close = {
-        "market_ticket": ((.79, -2.7, 1.83), (.72, .74, 1.62), 51),
+        "market_ticket": ((.81, -2.45, 1.73), (.70, -.68, 1.43), 43),
         "market_friend": ((-2.25, -2.7, 1.93), (-1.38, .08, 1.72), 47),
         "market_mayor": ((2.7, -2.35, 1.92), (1.43, .40, 1.68), 45),
-        "market_win": ((-1.88, -2.5, 1.83), (-1.37, .10, 1.69), 45),
+        "market_win": ((-1.43, -2.47, 2.21), (-.31, .61, 1.26), 40),
         "market_blackout": ((-.18, -2.35, 1.78), (-.60, .10, 1.57), 43),
-        "market_end": ((.72, -2.65, 1.88), (.66, .68, 1.63), 51),
+        "market_end": ((.82, -2.37, 1.70), (.70, -.67, 1.47), 45),
+        "market_trade": ((1.13, -2.58, 1.79), (.70, -.67, 1.42), 43),
     }
     position, target, lens = close.get(action, ((.95, -2.8, 1.95), (.02, .04, 1.66), 48))
     tracks = [
@@ -580,6 +582,40 @@ def market_camera(action, frames):
         camera_obj.data.keyframe_insert(data_path="lens", frame=frame)
         camera_obj.keyframe_insert(data_path="location", frame=frame)
         camera_obj.keyframe_insert(data_path="rotation_euler", frame=frame)
+
+
+def market_prop(action, frames, navy, mint, pink, violet):
+    if action == "market_win":
+        fountain = group("Fountain", (-.06, .92, 0))
+        for z, radius, depth in ((.13, .78, .24), (.47, .29, .55), (.77, .62, .13)):
+            bpy.ops.mesh.primitive_cylinder_add(vertices=40, radius=radius, depth=depth)
+            bowl = bpy.context.object
+            bowl.parent = fountain
+            bowl.location = (0, 0, z)
+            bowl.data.materials.append(yellow)
+        for index in range(14):
+            angle = index * 2.399
+            x, y = math.cos(angle), math.sin(angle)
+            drop = piece(fountain, "Flying gold", (0, 0, .81), (.075, .075, .11), yellow, .026)
+            launch = int(frames * (.31 + .013 * index))
+            keys(drop, "location", [(1, (0, 0, .83)), (launch, (0, 0, .83)),
+                 (min(frames-1, launch + frames//5), (x*.43, y*.43, 1.69+index*.022)),
+                 (frames, (x*.65, y*.65, .85))])
+    elif action in {"market_ticket", "market_trade", "market_end"}:
+        phone = group("Market phone", (.70, -.68, 1.42))
+        piece(phone, "Phone case", (0, 0, 0), (.68, .14, 1.06), navy, .07)
+        piece(phone, "Phone display", (0, -.077, 0), (.59, .018, .92), violet, .035)
+        main = {"market_ticket": "99%", "market_trade": "NO", "market_end": "YES"}[action]
+        market_lettering(main, (0, -.096, .05), .17, mint if main == "NO" else pink, phone)
+        market_lettering("MILO", (0, -.098, -.22), .105, cream, phone)
+        keys(phone, "rotation_euler", [(1, (0, 0, -.33)), (frames//3, (.08, 0, .08)),
+                                       (frames, (-.13, 0, -.04))])
+    elif action == "market_mayor":
+        box("Mayor podium", (1.46, -.19, .56), (.93, .57, 1.12), violet, .08)
+        market_lettering("FINE PRINT", (1.46, -.50, .79), .11, cream)
+    elif action == "market_friend":
+        box("Bench seat", (-1.53, .82, .46), (2.38, .49, .14), violet)
+        box("Bench back", (-1.53, 1.0, .76), (2.38, .13, .38), violet)
 
 
 def stage_market(action, frames):
@@ -620,6 +656,7 @@ def stage_market(action, frames):
     market_lettering(status, (0, -.185, -.25), .25, cream, board)
     for side in (-1, 1):
         piece(board, "Mount", (side*1.69, .05, -1.34), (.14, .14, 2.70), violet)
+    market_prop(action, frames, navy, mint, pink, violet)
     milo = roblox_actor("Milo", (0, -.03, 0), blue, brown, .11, False)
     market_gesture(milo, frames, 1.04 if action in {"market_hook","market_trade","market_count"} else .63)
     if action != "market_ticket":

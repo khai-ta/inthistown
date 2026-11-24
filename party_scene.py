@@ -309,8 +309,8 @@ class PartySet:
     def living(self):
         self.room()
         action=self.action
-        leo=self.person("Leo",(-1.18,-.25,0),-1.14)
-        michael=self.person("Michael",(1.20,-.15,0),.84)
+        leo=self.person("Leo",(-1.18,-.25,0),.69)
+        michael=self.person("Michael",(1.20,-.15,0),-.64)
         if action=="party_invite":
             self.motion(leo,[(0,(-1.18,-.25,0),(0,0),(0,0),0),(.49,(-1.18,-.25,0),(-.31,-.37),(.31,.27),.16),
                              (1,(-1.16,-.22,0),(0,-.13),(0,.12),.3)])

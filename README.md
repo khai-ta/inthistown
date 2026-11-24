@@ -76,3 +76,12 @@ The Kalshi-town episode uses the [official Roblox Blocky R15 rig](https://create
 ### Use avatars from a Studio project
 
 The renderer can work from official reference bodies without a live Studio session. To direct a cast inside Studio, install and open Roblox Studio and enable **Assistant → Manage MCP Servers → Enable Studio as MCP server**. Choose Codex CLI under **Quick connect** or use [Roblox's official Codex integration](https://github.com/Roblox/roblox-studio-agent-plugin). Restart the client and look for Studio's green connection indicator. In a connected place, Roblox Studio can insert a default R6 or R15 rig, your own avatar, or an avatar specified by username or user ID through Rig Builder. See [Studio MCP setup](https://create.roblox.com/docs/studio/mcp) and [Rig Builder](https://create.roblox.com/docs/studio/rig-builder).
+
+## Render A Party for Two
+
+Leo and Michael share one house and street. Exterior camera paths are checked against the house volumes, and interior paths are checked against the room envelope at every frame. The moving cars in the opening follow fixed opposing lanes.
+
+```sh
+.venv/bin/python make_video.py episodes/party-town.json --provider elevenlabs --voice Adam --tempo 1.4 -o output/a-party-for-two-voice.mp4
+.venv/bin/python mix_music.py output/a-party-for-two-voice.mp4 "/path/to/TempoRex Instrumental.mp3" output/a-party-for-two.mp4 --music-gain .26
+```

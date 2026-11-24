@@ -1058,12 +1058,12 @@ def market_crowd(entries, frames):
 def market_neighborhood(action,frames,m):
     paints = (m["brick"],m["glass"],m["sand"],m["mint"],m["violet"])
     if action in {"market_street","market_win"}:
-        box("Town ground", (0,9,-.24), (30,27,.41), m["grass"])
+        box("Town ground", (0,6,-.27), (72,72,.43), m["grass"])
         if action == "market_street":
-            box("Residential street",(0,-5.15,-.021),(2.83,7.5,.037),m["navy"],.012)
+            box("Residential street",(0,-7.47,-.021),(2.83,12.12,.037),m["navy"],.012)
             for side in (-1,1):
-                box("Residential sidewalk",(side*1.72,-5.27,.028),(.60,7.5,.071),m["concrete"],.019)
-                for row,y in enumerate((-6.63,-3.84,-.93)):
+                box("Residential sidewalk",(side*1.72,-7.51,.028),(.60,11.95,.071),m["concrete"],.019)
+                for row,y in enumerate((-9.67,-6.63,-3.84,-.93)):
                     town_house(side*(4.45-.23*(row%2)),y,0,2.28,
                                paints[(row+int(side>0)*2)%len(paints)],m)
                     town_tree(side*2.54,y+.46,.73,m)
@@ -1072,8 +1072,10 @@ def market_neighborhood(action,frames,m):
             southbound = town_car(-.62,-1.68,0,m["brick"],m)
             keys(northbound,"location",[(1,(.61,-8.91,0)),(int(frames*.51),(.61,-1.80,0)),(frames,(.61,-1.8,0))])
             keys(southbound,"location",[(1,(-.62,-1.68,0)),(int(frames*.53),(-.62,-8.9,0)),(frames,(-.62,-9,0))])
-            for y in (-7.2,-5.9,-4.6,-3.3,-2.0):
+            for y in (-11.1,-9.8,-8.5,-7.2,-5.9,-4.6,-3.3,-2.0):
                 box("Residential road stripe",(0,y,.013),(.085,.64,.023),yellow,.004)
+            for index,x in enumerate((-8.5,-5.7,-2.6,.34,3.16,6.08,9.21)):
+                town_house(x,8.7+(index%2)*.38,0,2.24,paints[(index+2)%5],m)
             for side in (-1,1):
                 for post in range(5):
                     box("School fence post",(side*(2.53+.38*post),-.55,.30),(.09,.11,.59),cream,.01)
@@ -1136,7 +1138,7 @@ def market_sky(is_day, outdoors):
     tree.links.new(split.outputs["Z"], ramp.inputs["Fac"])
     colors = ramp.color_ramp.elements
     colors[0].position = 0
-    colors[0].color = (.59,.73,.91,1) if is_day else (.12,.18,.37,1)
+    colors[0].color = (.42,.65,1,1) if is_day else (.12,.18,.37,1)
     colors[1].position = .72
     colors[1].color = (.10,.31,.69,1) if is_day else (.018,.034,.14,1)
     tree.links.new(ramp.outputs["Color"], sky.inputs["Color"])

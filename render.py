@@ -1025,6 +1025,7 @@ def town_car(x,y,heading,color,m):
         for end in (-1,1):
             piece(car,"Wheel",(side*.54,end*.64,.22),(.20,.33,.35),ink,.071)
         piece(car,"Headlight",(side*.35,-1,.36),(.26,.105,.12),cream,.025)
+    return car
 
 
 def market_crowd(entries, frames):
@@ -1067,6 +1068,10 @@ def market_neighborhood(action,frames,m):
                                paints[(row+int(side>0)*2)%len(paints)],m)
                     town_tree(side*2.54,y+.46,.73,m)
                     town_lamp(side*2.08,y+.39,m)
+            northbound = town_car(.61,-8.91,3.1416,m["glass"],m)
+            southbound = town_car(-.62,-1.68,0,m["brick"],m)
+            keys(northbound,"location",[(1,(.61,-8.91,0)),(int(frames*.51),(.61,-1.80,0)),(frames,(.61,-1.8,0))])
+            keys(southbound,"location",[(1,(-.62,-1.68,0)),(int(frames*.53),(-.62,-8.9,0)),(frames,(-.62,-9,0))])
             for y in (-7.2,-5.9,-4.6,-3.3,-2.0):
                 box("Residential road stripe",(0,y,.013),(.085,.64,.023),yellow,.004)
             for side in (-1,1):
@@ -1097,6 +1102,9 @@ def market_neighborhood(action,frames,m):
         town_car(3.88,-.96,-.17,m["brick"],m)
         town_car(-4.06,1.18,.18,m["sand"],m)
         town_bench(3.09,2.48,m)
+        if action == "market_count":
+            passer = town_car(-6.9,1.23,1.5708,m["glass"],m)
+            keys(passer,"location",[(1,(-6.9,1.23,0)),(int(frames*.66),(5.9,1.23,0)),(frames,(7.6,1.23,0))])
         entries=[(-2.4,2.08,.24,"talk"),(2.31,2.19,-.42,"react"),
                  (3.25,3.11,-.48,"walk"),(-3.24,2.77,.41,"walk"),
                  (.29,3.27,-.12,"react")]
@@ -1115,6 +1123,43 @@ def market_neighborhood(action,frames,m):
         market_crowd([(-3.18,1.54,.16,"talk"),(2.57,1.6,-.28,"talk")],frames)
     elif action == "market_mayor":
         market_crowd([(-2.66,.91,.42,"talk")],frames)
+
+
+def market_sky(is_day, outdoors):
+    if not outdoors:
+        return
+    tree = scene.world.node_tree
+    coords = tree.nodes.new("ShaderNodeTexCoord")
+    split = tree.nodes.new("ShaderNodeSeparateXYZ")
+    tree.links.new(coords.outputs["Normal"], split.inputs["Vector"])
+    ramp = tree.nodes.new("ShaderNodeValToRGB")
+    tree.links.new(split.outputs["Z"], ramp.inputs["Fac"])
+    colors = ramp.color_ramp.elements
+    colors[0].position = 0
+    colors[0].color = (.59,.73,.91,1) if is_day else (.12,.18,.37,1)
+    colors[1].position = .72
+    colors[1].color = (.10,.31,.69,1) if is_day else (.018,.034,.14,1)
+    tree.links.new(ramp.outputs["Color"], sky.inputs["Color"])
+    sky.inputs["Strength"].default_value = .80 if is_day else .58
+    light_mat = material("Cloud white" if is_day else "Moon white",(1,.96,.89))
+    shader = light_mat.node_tree.nodes.get("Principled BSDF")
+    shader.inputs["Emission Color"].default_value = (.82,.91,1,1)
+    shader.inputs["Emission Strength"].default_value = .7 if is_day else 2.1
+    ellipses = []
+    if is_day:
+        for cx,cy,cz in ((-9,15,8.7),(4.7,19,9.4),(10,26,11.7),(-2.4,24,10.6)):
+            for i in range(5):
+                ellipses.append(((cx+(i-2)*.91,cy+(i%2)*.39,cz+.28*(i%3)),
+                                 (1.36-.10*(i%3),.8,.48+.11*(i%2))))
+    else:
+        ellipses.append(((3.15,16.9,7.8),(.54,.54,.54)))
+    for pos, size in ellipses:
+        bpy.ops.mesh.primitive_uv_sphere_add(segments=16,ring_count=8,location=pos)
+        puff = bpy.context.object
+        puff.scale = size
+        puff.data.materials.append(light_mat)
+        for polygon in puff.data.polygons:
+            polygon.use_smooth = True
 
 
 def stage_market(action, frames):
@@ -1147,6 +1192,7 @@ def stage_market(action, frames):
     outside = action in {"market_street","market_win","market_count","market_blackout","market_hook","market_end"}
     is_day = action in {"market_street","market_win"}
     sky.inputs["Color"].default_value = (.31,.54,.88,1) if is_day else (.045,.085,.28,1)
+    market_sky(is_day,outside)
     light("AREA",(-3.1,-3.6,4.2),700 if is_day else 465,
           (1,.84,.71) if is_day else (.55,.65,1),(0,.55,1.15),4.4)
     light("AREA",(3.2,-1.55,3.7),420,(1,.73,.70) if outside else (1,.79,.56),(0,.53,1.2),3.5)

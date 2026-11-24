@@ -893,8 +893,8 @@ def market_raffle(frames,m):
 
 
 def market_booth(frames,m):
-    box("Alley",(0,1,-.14),(10,12,.27),m["navy"])
-    box("Alley back",(0,2.88,2.09),(9,.34,4.2),m["violet"])
+    box("Alley",(0,1,-.14),(5.0,5.15,.27),m["navy"])
+    box("Alley back",(0,2.88,2.09),(5.16,.34,4.2),m["violet"])
     box("Left wall",(-2.5,0,1.83),(.20,6,3.66),m["brick"])
     for z in (.54,1.28,2.06,2.84):
         box("Brick course",(-2.371,0,z),(.018,6,.033),m["concrete"])
@@ -959,8 +959,10 @@ def market_crossing(action,frames,m):
 
 
 def market_rooftop(frames,m):
-    box("Roof",(0,.63,-.15),(11,8,.30),m["concrete"])
-    box("Parapet",(0,2.43,.51),(11,.27,1.02),m["brick"])
+    box("Roof",(0,1.82,-.15),(4.59,3.49,.30),m["concrete"])
+    box("Rear parapet",(0,3.47,.41),(4.60,.19,.82),m["sand"])
+    for side in (-1,1):
+        box("Side parapet",(side*2.23,1.83,.37),(.16,3.33,.74),m["sand"])
     phone=market_phone((.46,-.19,1.47),m["navy"],m["violet"],"WILL KHAI TELL?","OPEN")
     recording=market_lettering("REC",(0,-.091,.33),.101,m["pink"],phone)
     settlement=market_lettering("SETTLED YES",(0,-.100,-.13),.129,m["mint"],phone)
@@ -1074,7 +1076,7 @@ TOWN_SITES = {
     "market_street": (-11.4,0,0),
     "market_win": (-4.0,.6,0),
     "market_count": (5.8,0,0),
-    "market_trade": (10.8,1.04,0),
+    "market_trade": (18.05,1.04,0),
     "market_blackout": (5.8,-2.39,0),
     "market_hook": (5.8,-2.39,0),
     "market_end": (13.8,1.19,4.42),
@@ -1347,14 +1349,13 @@ def street_dressing(action,m):
             box("Bin lid",(x,1.89,.89),(.53,.58,.10),ink,.034)
         box("Painted direction arrow",(.48,.22,.014),(.74,.23,.018),m["mint"],.006)
     elif action == "market_end":
-        box("Roof access shed",(-3.62,1.02,.98),(1.71,1.61,1.93),m["brick"],.038)
-        box("Access door",(-3.62,.19,.88),(.70,.11,1.72),m["navy"],.018)
-        market_lettering("ROOF",(-3.62,.118,1.71),.11,cream)
-        box("Vent housing",(2.73,1.32,.31),(.96,.79,.62),m["concrete"],.063)
+        box("Roof access shed",(-1.37,2.61,.98),(1.23,1.22,1.93),m["brick"],.038)
+        box("Access door",(-1.37,1.98,.88),(.70,.11,1.72),m["navy"],.018)
+        market_lettering("ROOF",(-1.37,1.91,1.71),.11,cream)
+        box("Vent housing",(1.62,2.64,.31),(.96,.79,.62),m["concrete"],.063)
         for i in range(4):
-            box("Vent louver",(2.73,.912,.17+i*.11),(.76,.045,.045),m["navy"],.009)
-        for x in (-2.75,2.95):
-            box("Parapet cap",(x,2.43,1.04),(5.29,.35,.084),m["concrete"],.019)
+            box("Vent louver",(1.62,2.23,.17+i*.11),(.76,.045,.045),m["navy"],.009)
+        box("Parapet cap",(0,3.47,.85),(4.60,.23,.086),m["concrete"],.019)
 
 
 def stage_market(action, frames):

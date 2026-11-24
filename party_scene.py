@@ -45,16 +45,23 @@ class PartySet:
         self.r.scene.camera = camera
         camera.data.sensor_fit = "HORIZONTAL"
         camera.data.clip_start = .065
-        previous = 0
-        for fraction, position, target, focal in moves:
-            frame = max(previous + 1, self.time(fraction))
-            previous = frame
+        def place(frame, position, target, focal):
             camera.location = position
             camera.rotation_euler = (Vector(target) - camera.location).to_track_quat("-Z", "Y").to_euler()
             camera.data.lens = focal
             camera.keyframe_insert(data_path="location", frame=frame)
             camera.keyframe_insert(data_path="rotation_euler", frame=frame)
             camera.data.keyframe_insert(data_path="lens", frame=frame)
+
+        previous = 0
+        last_move = None
+        for fraction, position, target, focal in moves:
+            frame = max(previous + 1, self.time(fraction))
+            if last_move and fraction - last_move[0] <= .035 and frame - 1 > previous:
+                place(frame - 1, *last_move[1:])
+            place(frame, position, target, focal)
+            previous = frame
+            last_move = (fraction, position, target, focal)
         for frame in range(1, self.frames + 1):
             self.r.scene.frame_set(frame)
             x, y, z = camera.location

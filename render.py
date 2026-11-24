@@ -554,186 +554,359 @@ def market_lettering(label, pos, size, color, parent=None):
     return text
 
 
-def market_gesture(character, frames, energy, offset=0):
-    rig, head, arms, legs = character
-    rest = rig.location.copy()
-    turn = rig.rotation_euler.z
-    fraction = (.0, .21, .44, .67, .88, 1.0)
-    beats = [min(frames, 1 + int((frames - 1) * part)) for part in fraction]
-    for side, upper in zip((-1, 1), arms):
-        lower = upper.children[0]
-        if lower.name.endswith("LowerArm"):
-            lower.rotation_mode = "XYZ"
-            keys(lower, "rotation_euler", [(frame, (.22 + .49 * energy * (i % 2), 0, .04 * side))
-                 for i, frame in enumerate(beats)])
-        keys(upper, "rotation_euler", [(frame, (energy * (.36 if (i + offset) % 2 else -.76),
-                                               .1 * side, -.22 * side * energy))
-             for i, frame in enumerate(beats)])
-    for side, thigh in zip((-1, 1), legs):
-        knee = thigh.children[0]
-        knee.rotation_mode = "XYZ"
-        keys(thigh, "rotation_euler", [(frame, (.25 * energy * side * (-1)**i, 0, 0))
-                                       for i, frame in enumerate(beats)])
-        keys(knee, "rotation_euler", [(frame, (.33 * energy * (i % 2), 0, 0))
-                                      for i, frame in enumerate(beats)])
-    keys(head, "rotation_euler", [(frame, (.125 * (-1)**i, .18 * (-1)**(i+offset), .06))
-                                  for i, frame in enumerate(beats)])
-    keys(rig, "rotation_euler", [(frame, (.07 * energy * (-1)**i, 0, turn + .16 * (-1)**(i+offset)))
-                                 for i, frame in enumerate(beats)])
-    keys(rig, "location", [(frame, (rest.x + .11*energy * (-1)**i, rest.y - .15*energy*(i % 3),
-                                     rest.z + .09*energy*(i % 2)))
-                           for i, frame in enumerate(beats)])
-
-
-def market_camera(action, frames):
-    close = {
-        "market_ticket": ((.81, -2.45, 1.73), (.70, -.68, 1.43), 43),
-        "market_friend": ((-2.25, -2.7, 1.93), (-1.38, .08, 1.72), 47),
-        "market_mayor": ((2.7, -2.35, 1.92), (1.43, .40, 1.68), 45),
-        "market_win": ((-1.43, -2.47, 2.21), (-.31, .61, 1.26), 40),
-        "market_blackout": ((-.18, -2.35, 1.78), (-.60, .10, 1.57), 43),
-        "market_end": ((.82, -2.37, 1.70), (.70, -.67, 1.47), 45),
-        "market_trade": ((1.13, -2.58, 1.79), (.70, -.67, 1.42), 43),
-    }
-    position, target, lens = close.get(action, ((.95, -2.8, 1.95), (.02, .04, 1.66), 48))
-    tracks = [
-        (0.0, (-3.0, -6.2, 3.4), (0, .68, 1.63), 33, -.055),
-        (.32, (-1.6, -5.1, 2.65), (0, .50, 1.54), 38, .022),
-        (.33, position, target, lens, -.075),
-        (.70, (position[0]+.35, position[1]+.22, position[2]-.13), target, lens+4, .055),
-        (.71, (2.4, -5.15, 2.64), (0, .67, 1.52), 36, -.037),
-        (1.0, (1.2, -4.45, 2.27), (0, .57, 1.57), 40, 0),
-    ]
+def market_camera(frames, moves):
+    """Each tuple marks a camera key. Adjacent keys at a cut skip interpolation."""
     bpy.ops.object.camera_add()
-    camera_obj = bpy.context.object
-    scene.camera = camera_obj
-    camera_obj.data.sensor_fit = "HORIZONTAL"
+    cam = bpy.context.object
+    cam.data.sensor_fit = "HORIZONTAL"
+    scene.camera = cam
     previous = 0
-    for ratio, pos, point, focal, roll in tracks:
-        frame = max(previous + 1, round(1 + (frames-1)*ratio))
+    for t, pos, point, focal in moves:
+        frame = max(previous + 1, round(1 + (frames - 1) * t))
         previous = frame
-        camera_obj.location = pos
-        camera_obj.rotation_euler = (Vector(point)-camera_obj.location).to_track_quat("-Z", "Y").to_euler()
-        camera_obj.rotation_euler.rotate_axis("Z", roll)
-        camera_obj.data.lens = focal
-        camera_obj.data.keyframe_insert(data_path="lens", frame=frame)
-        camera_obj.keyframe_insert(data_path="location", frame=frame)
-        camera_obj.keyframe_insert(data_path="rotation_euler", frame=frame)
+        cam.location = pos
+        cam.rotation_euler = (Vector(point) - cam.location).to_track_quat("-Z", "Y").to_euler()
+        cam.data.lens = focal
+        cam.data.keyframe_insert(data_path="lens", frame=frame)
+        cam.keyframe_insert(data_path="location", frame=frame)
+        cam.keyframe_insert(data_path="rotation_euler", frame=frame)
 
 
-def market_prop(action, frames, navy, mint, pink, violet):
-    if action == "market_win":
-        fountain = group("Fountain", (-.06, .92, 0))
-        for z, radius, depth in ((.13, .78, .24), (.47, .29, .55), (.77, .62, .13)):
-            bpy.ops.mesh.primitive_cylinder_add(vertices=40, radius=radius, depth=depth)
-            bowl = bpy.context.object
-            bowl.parent = fountain
-            bowl.location = (0, 0, z)
-            bowl.data.materials.append(yellow)
-        for index in range(14):
-            angle = index * 2.399
-            x, y = math.cos(angle), math.sin(angle)
-            drop = piece(fountain, "Flying gold", (0, 0, .81), (.075, .075, .11), yellow, .026)
-            launch = int(frames * (.31 + .013 * index))
-            keys(drop, "location", [(1, (0, 0, .83)), (launch, (0, 0, .83)),
-                 (min(frames-1, launch + frames//5), (x*.43, y*.43, 1.69+index*.022)),
-                 (frames, (x*.65, y*.65, .85))])
-    elif action in {"market_ticket", "market_trade", "market_end"}:
-        phone = group("Market phone", (.70, -.68, 1.42))
-        piece(phone, "Phone case", (0, 0, 0), (.68, .14, 1.06), navy, .07)
-        piece(phone, "Phone display", (0, -.077, 0), (.59, .018, .92), violet, .035)
-        main = {"market_ticket": "99%", "market_trade": "NO", "market_end": "YES"}[action]
-        market_lettering(main, (0, -.096, .05), .17, mint if main == "NO" else pink, phone)
-        market_lettering("MILO", (0, -.098, -.22), .105, cream, phone)
-        keys(phone, "rotation_euler", [(1, (0, 0, -.33)), (frames//3, (.08, 0, .08)),
-                                       (frames, (-.13, 0, -.04))])
-    elif action == "market_mayor":
-        box("Mayor podium", (1.46, -.19, .56), (.93, .57, 1.12), violet, .08)
-        market_lettering("FINE PRINT", (1.46, -.50, .79), .11, cream)
-    elif action == "market_friend":
-        box("Bench seat", (-1.53, .82, .46), (2.38, .49, .14), violet)
-        box("Bench back", (-1.53, 1.0, .76), (2.38, .13, .38), violet)
+def market_actor(role, position, yaw=0):
+    colors = {
+        "milo": ((.24, .092, .42), brown, False, "milo"),
+        "jules": ((.76, .14, .36), ink, False, "jules"),
+        "mayor": ((.09, .36, .29), brown, True, "mayor"),
+        "dad": ((.64, .20, .072), brown, True, None),
+    }
+    shade, hair, adult, costume = colors[role]
+    return roblox_actor(role.title(), position, material(role, shade), hair, yaw, adult, costume)
+
+
+def market_character_motion(character, frames, poses):
+    rig, head, arms, legs = character
+    # Rotations are in the official R15 joints' local space.
+    for index, arm in enumerate(arms):
+        elbow = next(bone for bone in arm.children if bone.name.endswith("LowerArm"))
+        elbow.rotation_mode = "XYZ"
+        keys(arm, "rotation_euler", [(max(1, round(n*frames)), (s[index], .07*(-1)**index, 0))
+                                      for n, _, s, _, _ in poses])
+        keys(elbow, "rotation_euler", [(max(1, round(n*frames)), (e[index], 0, 0))
+                                        for n, _, _, e, _ in poses])
+    base_yaw = rig.rotation_euler.z
+    keys(rig, "location", [(max(1, round(n*frames)), pos) for n, pos, _, _, _ in poses])
+    keys(rig, "rotation_euler", [(max(1, round(n*frames)), (0, 0, base_yaw + yaw))
+                                  for n, _, _, _, yaw in poses])
+    keys(head, "rotation_euler", [(max(1, round(n*frames)), (.12 if any(a < -.4 for a in arms_pose) else -.05, 0, .1*yaw))
+                                  for n, _, arms_pose, _, yaw in poses])
+    for side, hip in zip((-1, 1), legs):
+        knee = next(bone for bone in hip.children if bone.name.endswith("LowerLeg"))
+        knee.rotation_mode = "XYZ"
+        stride = .22 if (Vector(poses[0][1])-Vector(poses[-1][1])).length > .55 else .055
+        sequence = [(1, 0), (frames//5, stride), (2*frames//5, -stride),
+                    (3*frames//5, stride), (4*frames//5, -stride), (frames, 0)]
+        keys(hip, "rotation_euler", [(frame, (side*step, 0, 0)) for frame, step in sequence])
+        keys(knee, "rotation_euler", [(frame, (max(0, -side*step*.8), 0, 0)) for frame, step in sequence])
+
+
+def market_phone(pos, navy, glow, title, detail):
+    prop = group("Phone", pos)
+    piece(prop, "Case", (0, 0, 0), (.64, .12, .95), navy, .07)
+    piece(prop, "Display", (0, -.067, 0), (.56, .02, .85), glow, .03)
+    market_lettering(title, (0, -.088, .14), .105, cream, prop)
+    market_lettering(detail, (0, -.088, -.13), .19, yellow, prop)
+    return prop
+
+
+def market_school(frames, m):
+    box("Grass", (0, 1, -.16), (20, 17, .30), m["grass"])
+    box("Walkway", (0, -.58, .004), (3.0, 9.4, .03), m["concrete"])
+    box("School", (0, 3.2, 2.3), (9.4, 2.7, 4.6), m["brick"])
+    box("Entry", (0, 1.80, 1.20), (1.8, .12, 2.39), m["navy"])
+    box("Canopy", (0, 1.46, 2.57), (2.68, .91, .18), cream)
+    for x in (-3.3, -2.2, 2.2, 3.3):
+        for z in (1.48, 3.0):
+            box("Classroom window", (x, 1.8, z), (.81, .10, .83), m["glass"])
+    market_lettering("SCHOOL", (0, 1.78, 3.38), .42, cream)
+    board = group("Snow day sign", (1.88, -.64, 1.07))
+    piece(board, "Stake", (0, 0, -.47), (.12, .14, 1.2), brown)
+    piece(board, "Sign", (0, 0, .21), (1.44, .14, .89), m["navy"])
+    market_lettering("SNOW DAY?", (0,-.083,.39), .16, cream, board)
+    market_lettering("12% YES", (0,-.083,.11), .21, m["mint"], board)
+    milo = market_actor("milo", (-1.82, -.06, 0), .22)
+    market_character_motion(milo, frames, [
+        (0, (-1.82,-.06,0), (0,0), (0,0), 0),
+        (.41, (-.84,-.55,0), (-.47,0), (.26,0), .23),
+        (.68, (-.38,-.68,0), (0,-.59), (0,.30), .51),
+        (1, (-.29,-.74,0), (0,-.24), (0,.20), .26),
+    ])
+    for i in range(14):
+        dot = box("Snow flurry", ((i*13%37)/7-2.4, .6+(i%3)*.35, 2.4), (.034, .035, .043), cream, .006)
+        keys(dot, "location", [(1, dot.location.copy()), (frames, (dot.location.x+.2, dot.location.y, .05+i*.15))])
+    market_camera(frames, [(0,(-6.7,-8.2,6.3),(0,1,1.2),35), (.42,(-4.3,-6.3,3.65),(0,.7,1.26),37),
+                            (.43,(3.65,-4.80,2.0),(1.18,-.28,1.20),44), (1,(3.15,-3.73,1.82),(1.2,-.32,1.20),48)])
+
+
+def market_fountain(frames, m):
+    box("Park pavers", (0, .6, -.14), (16, 15, .27), m["concrete"])
+    for x in (-4.1,-2.8,2.95,4.15):
+        box("Tree trunks", (x,2.8,.88), (.25,.25,1.76), brown)
+        box("Tree canopy", (x,2.8,2.07), (1.35,1.25,1.42), m["grass"], .20)
+    fountain = group("Fountain", (0,.84,0))
+    basin_material = material("Fountain changes to gold", (.16,.43,.58))
+    color = basin_material.node_tree.nodes.get("Principled BSDF").inputs["Base Color"]
+    impact = max(2, int(frames*.31))
+    color.keyframe_insert(data_path="default_value", frame=impact-3)
+    color.default_value = yellow.diffuse_color
+    color.keyframe_insert(data_path="default_value", frame=impact+3)
+    for z, radius, depth in ((.15,1.26,.27),(.48,.41,.45),(.79,.84,.16)):
+        bpy.ops.mesh.primitive_cylinder_add(vertices=40, radius=radius, depth=depth)
+        cylinder = bpy.context.object
+        cylinder.parent = fountain
+        cylinder.location = (0,0,z)
+        cylinder.data.materials.append(basin_material)
+    for i in range(22):
+        angle = i*2.399
+        x,y = math.cos(angle), math.sin(angle)
+        coin = piece(fountain, "Gold coin", (0,0,.84), (.11,.04,.11), yellow, .033)
+        launch = impact + i%5
+        keys(coin,"scale",[(1,(.001,)*3),(launch-1,(.001,)*3),(launch,(1,)*3)])
+        keys(coin,"location",[(launch,(0,0,.84)),(int(frames*.64),(x*1.18,y*.75,2.8+(i%6)*.08)),
+                              (frames,(x*2.0,y*1.5,.19 + (i%3)*.22))])
+        keys(coin,"rotation_euler",[(launch,(0,0,0)),(frames,(i*.7,5.8,i*.41))])
+    jules = market_actor("jules", (-1.82,-.05,0), -.12)
+    market_character_motion(jules,frames,[(0,(-1.82,-.05,0),(0,0),(0,0),.05),
+        (.34,(-1.76,-.06,0),(-.62,-.76),(.26,.35),-.14),
+        (.69,(-1.55,-.27,.12),(-.88,-.9),(.45,.4),.11),
+        (1,(-1.62,-.32,0),(-.38,-.4),(.23,.13),0)])
+    market_camera(frames,[(0,(3.9,-4.2,2.5),(-.25,.5,1.14),34),(.30,(2.77,-3.57,2.2),(-.25,.61,1.17),38),
+                          (.31,(.78,-1.18,1.64),(.1,.82,.91),42),(.58,(.62,-1.5,2.13),(.22,.65,1.3),37),
+                          (.59,(-3.6,-3.8,2.52),(-.71,.42,1.37),33),(1,(-3.15,-3.08,2.25),(-.84,.23,1.35),35)])
+
+
+def market_room(m, floor, wall):
+    box("Interior floor", (0, .34, -.14), (12, 12, .27), floor)
+    box("Back wall", (0, 2.53, 2.22), (11, .20, 4.5), wall)
+    box("Side wall", (-4.4, .35, 2.22), (.19, 4.5, 4.5), wall)
+    box("Back trim", (0, 2.41, .12), (10.8, .11, .22), cream)
+
+
+def market_bedroom(frames,m):
+    market_room(m,brown,m["violet"])
+    box("Rug", (-.9,-.11,.012),(3.2,3.42,.04),m["pink"])
+    box("Bed frame", (-2.02,1.18,.34),(1.78,2.25,.63),m["navy"])
+    box("Mattress", (-2.02,1.18,.69),(1.70,2.15,.28),cream)
+    box("Quilt", (-2.02,.95,.85),(1.69,1.60,.12),m["glass"])
+    box("Pillow", (-2.02,1.96,.88),(1.19,.44,.17),cream)
+    box("Window", (.87,2.405,2.42),(1.66,.12,1.29),m["navy"])
+    box("Window pane", (.87,2.33,2.43),(1.47,.038,1.1),m["glass"])
+    box("Bedside table", (.1,.87,.44),(1.08,.76,.87),brown)
+    phone = market_phone((.1,.78,1.24),m["navy"],m["violet"],"MILO: VANISH?","99% YES")
+    keys(phone,"rotation_euler",[(1,(.88,0,0)),(frames//3,(.51,0,.06)),(frames,(.51,0,.04))])
+    milo = market_actor("milo", (-.62,-.11,0),.19)
+    market_character_motion(milo,frames,[(0,(-.62,-.11,0),(0,0),(0,0),0),(.55,(-.61,.13,0),(0,-.7),(0,.38),.29),
+                                        (1,(-.64,.16,0),(-.34,-.4),(.27,.2),-.12)])
+    market_camera(frames,[(0,(-3.55,-4.65,2.9),(-.81,.62,1.13),33),(.42,(-2.55,-3.71,2.46),(-.55,.63,1.16),36),
+                            (.43,(1.04,-.8,2.43),(.1,.78,1.22),46),(1,(.87,-.48,2.18),(.1,.78,1.24),50)])
+
+
+def market_diner(frames,m):
+    market_room(m,m["concrete"],m["brick"])
+    for x in range(-4,5):
+        for y in range(-3,3):
+            if (x+y)%2:
+                box("Checker tile",(x,y,.006),(.98,.98,.013),m["navy"],0)
+    for x in (-2.85,1.98):
+        box("Booth seat",(x,1.33,.54),(1.69,.83,.34),m["pink"])
+        box("Booth back",(x,1.75,1.05),(1.69,.24,1.23),m["pink"])
+    box("Diner table",(0,.4,1.06),(1.70,1.02,.16),cream)
+    box("Pedestal",(0,.40,.52),(.38,.44,1.0),m["concrete"])
+    market_lettering("DINER", (0,2.38,2.8),.5,cream)
+    phone = market_phone((.42,.13,1.45),m["navy"],m["violet"],"MILO","99%")
+    keys(phone,"location",[(1,(.42,.13,1.45)),(int(frames*.42),(-.12,.14,1.55)),
+                          (int(frames*.62),(-.37,.15,1.25)),(frames,(-.37,.15,1.25))])
+    keys(phone,"rotation_euler",[(1,(.20,0,0)),(int(frames*.52),(1.18,0,-.24)),
+                                (int(frames*.63),(-1.57,0,.21)),(frames,(-1.57,0,.21))])
+    jules = market_actor("jules",(-1.36,.40,0),.25)
+    milo = market_actor("milo",(1.42,.52,0),-.36)
+    market_character_motion(jules,frames,[(0,(-1.36,.40,0),(0,0),(0,0),0),(.42,(-1.04,.33,0),(0,-.75),(0,.4),.18),
+                                          (.65,(-.98,.27,0),(0,-.96),(0,.62),.30),(1,(-1.03,.31,0),(0,-.33),(0,.22),0)])
+    market_character_motion(milo,frames,[(0,(1.42,.52,0),(-.6,0),(.3,0),0),(.49,(1.35,.50,0),(-.50,-.11),(.22,0),-.16),
+                                         (1,(1.49,.50,0),(0,0),(0,0),.07)])
+    market_camera(frames,[(0,(2.72,-4.75,2.66),(0,.48,1.39),37),(.39,(2.02,-3.9,2.34),(0,.35,1.35),42),
+                          (.40,(-.82,-1.71,2.45),(-.16,.18,1.21),39),(.68,(-.75,-1.44,2.36),(-.19,.19,1.15),45),
+                          (.69,(-2.63,-2.67,1.89),(-.95,.32,1.64),42),(1,(-2.2,-2.11,1.80),(-.95,.32,1.64),46)])
+
+
+def market_office(frames,m):
+    market_room(m,brown,m["grass"])
+    for x in (-2.55,2.55):
+        box("Office bookshelf",(x,2.12,1.60),(1.27,.51,3.13),brown)
+        for i in range(4):
+            for j in range(5):
+                box("Ledger",(x+(j-2)*.19,1.84,.51+i*.59),(.13,.15,.44),(m["navy"],m["pink"],cream)[(j+i)%3],.008)
+    market_lettering("TOWN HALL", (0,2.38,3.16),.40,cream)
+    desk = group("Mayor's desk",(0,.14,0))
+    piece(desk,"Desktop",(0,0,1.14),(2.66,1.05,.18),brown)
+    piece(desk,"Desk front",(0,-.46,.57),(2.45,.16,1.02),brown)
+    contract = group("Contract",(-.48,.51,1.28))
+    piece(contract,"Paper",(0,0,0),(.79,.89,.018),cream,.006)
+    for i in range(5):
+        piece(contract,"Printed clause",(0,-.26+i*.12,.013),(.54-.05*(i%2),.025,.009),m["navy"],.003)
+    keys(contract,"location",[(1,(-.48,.51,1.28)),(int(frames*.37),(-.32,.44,1.28)),
+                              (int(frames*.56),(.46,-.29,1.28)),(frames,(.53,-.35,1.28))])
+    mayor = market_actor("mayor",(-.73,1.24,0),.27)
+    milo = market_actor("milo",(1.79,-.27,0),-1.02)
+    market_character_motion(mayor,frames,[(0,(-.73,1.24,0),(0,0),(0,0),0),(.55,(-.55,1.14,0),(0,-.88),(0,.42),.23),
+                                           (1,(-.57,1.17,0),(0,-.27),(0,.19),.15)])
+    market_character_motion(milo,frames,[(0,(2.18,-.19,0),(0,0),(0,0),0),(.47,(1.57,-.36,0),(-.31,0),(.3,0),-.12),
+                                         (1,(1.47,-.34,0),(-.49,0),(.32,0),-.18)])
+    market_camera(frames,[(0,(3.8,-4.31,2.73),(.22,.65,1.44),38),(.46,(3.25,-3.48,2.40),(.18,.52,1.37),43),
+                          (.47,(.38,-.36,3.63),(.07,-.03,1.13),42),(.73,(.40,-.29,3.12),(.28,-.12,1.19),51),
+                          (.74,(2.74,-2.24,2.2),(1.47,-.32,1.83),43),(1,(2.49,-1.92,2.11),(1.49,-.32,1.86),47)])
+
+
+def market_side_street(m):
+    box("Street",(0,0,-.17),(17,15,.29),m["navy"])
+    box("Pavement",(0,2.48,.02),(16,3.1,.12),m["concrete"])
+    for x in (-4.8,-2.35,2.35,4.8):
+        box("Shop wall",(x,4.41,1.72),(2.3,1.9,3.43),m["brick"] if x > 0 else m["violet"])
+        box("Window",(x,3.43,1.85),(1.52,.07,.95),m["glass"])
+        box("Awning",(x,3.28,2.48),(2.17,.56,.18),m["pink"])
+    for x in (-3.18,3.13):
+        box("Lamp pole",(x,1.18,1.51),(.12,.12,3),ink)
+        box("Streetlight glass",(x,1.18,3.03),(.3,.33,.18),m["mint"])
+    for x in range(-6,7):
+        box("Road dash",(x*1.2,-1.76,.015),(.61,.10,.014),yellow,.004)
+
+
+def market_raffle(frames,m):
+    market_side_street(m)
+    box("Raffle counter",(0,.79,.51),(2.33,.8,1.02),brown)
+    box("Countertop",(0,.79,1.06),(2.44,.89,.14),cream)
+    box("Raffle sign",(0,.34,1.43),(1.55,.11,.43),m["navy"])
+    market_lettering("RAFFLE", (0,.271,1.44),.21,cream)
+    for index in range(7):
+        ticket=box("Ticket",(-.92+index*.29,.59,1.15),(.21,.27,.027),m["pink"],.01)
+        ticket.rotation_euler.z = .29 * (-1)**index
+    dad = market_actor("dad",(.41,1.46,0),-.27)
+    milo = market_actor("milo",(-1.64,-.22,0),.46)
+    market_character_motion(dad,frames,[(0,(.41,1.46,0),(0,0),(0,0),0),(.58,(.38,1.32,0),(-.38,-.20),(.25,.24),.35),
+                                       (1,(.39,1.36,0),(-.27,0),(.12,0),-.21)])
+    market_character_motion(milo,frames,[(0,(-1.64,-.22,0),(0,0),(0,0),0),(.35,(-1.39,-.14,0),(-.92,0),(.33,0),.39),
+                                         (.64,(-1.31,-.17,0),(-.71,0),(.32,0),.22),(1,(-1.39,-.15,0),(0,0),(0,0),.03)])
+    market_camera(frames,[(0,(-4.7,-4.16,3.15),(-.29,.78,1.23),37),(.45,(-3.8,-3.45,2.76),(-.30,.79,1.19),42),
+                          (.46,(1.95,-1.68,1.91),(.35,1.38,1.70),44),(1,(1.72,-1.36,1.91),(.34,1.37,1.73),46)])
+
+
+def market_booth(frames,m):
+    box("Alley",(0,1,-.14),(10,12,.27),m["navy"])
+    box("Alley back",(0,2.88,2.09),(9,.34,4.2),m["violet"])
+    box("Left wall",(-2.5,0,1.83),(.20,6,3.66),m["brick"])
+    for z in (.54,1.28,2.06,2.84):
+        box("Brick course",(-2.371,0,z),(.018,6,.033),m["concrete"])
+    machine = group("Betting booth",(.47,1.57,0))
+    piece(machine,"Cabinet",(0,0,1.13),(1.48,.62,2.26),m["violet"],.08)
+    piece(machine,"Panel",(0,-.325,1.62),(1.13,.09,.91),m["navy"])
+    market_lettering("VANISH?", (0,-.379,1.87),.18,cream,machine)
+    button = piece(machine,"No button",(.25,-.389,1.43),(.44,.11,.31),m["mint"],.045)
+    market_lettering("NO", (.25,-.452,1.43),.18,m["navy"],machine)
+    piece(machine,"Coin slot",(-.29,-.358,1.06),(.31,.062,.10),ink,.012)
+    keys(button,"location",[(1,(.25,-.389,1.43)),(int(frames*.74)-1,(.25,-.389,1.43)),
+                            (int(frames*.74),(.25,-.34,1.43)),(frames,(.25,-.38,1.43))])
+    bpy.ops.mesh.primitive_cylinder_add(vertices=32,radius=.125,depth=.045)
+    coin=bpy.context.object
+    coin.data.materials.append(yellow)
+    coin.rotation_euler.x=1.57
+    keys(coin,"location",[(1,(-.26,.56,1.75)),(int(frames*.47),(.16,.86,1.44)),
+                          (int(frames*.67),(.18,1.23,1.065)),(frames,(.18,1.31,1.065))])
+    milo=market_actor("milo",(-1.57,-1.03,0),.33)
+    market_character_motion(milo,frames,[(0,(-1.57,-1.03,0),(-.47,.22),(.21,.20),0),
+        (.35,(-.76,.21,0),(.25,-.54),(.25,.40),.45),(.72,(-.55,.65,0),(0,-.93),(0,.63),.65),
+        (1,(-.58,.61,0),(-.12,-.36),(.12,.25),.47)])
+    market_camera(frames,[(0,(-2.26,-4.2,1.53),(-.55,.62,1.21),35),(.40,(-1.67,-3.28,1.62),(-.17,.80,1.30),40),
+                          (.41,(.31,-.55,1.54),(.25,1.21,1.31),49),(1,(.48,-.29,1.51),(.48,1.21,1.37),51)])
+
+
+def market_crossing(action,frames,m):
+    market_side_street(m)
+    for x in range(-3,4):
+        box("Crosswalk",(.55*x,.38,.019),(.33,2.2,.022),cream,.006)
+    milo = market_actor("milo",(-.9,-.12,0),.48)
+    jules = market_actor("jules",(1.0,.27,0),-.61)
+    if action=="market_blackout":
+        market_character_motion(jules,frames,[(0,(1.0,.27,0),(0,0),(0,0),0),(.6,(.84,.31,0),(0,0),(0,0),-.45),
+                                              (1,(.60,.30,0),(0,0),(0,0),-.54)])
+        market_character_motion(milo,frames,[(0,(-.9,-.12,0),(0,0),(0,0),0),(.55,(-.59,-.09,0),(0,-.52),(0,.24),.08),
+                                             (1,(-.50,-.11,0),(0,-.33),(0,.21),.12)])
+        market_camera(frames,[(0,(-.95,-5,3.42),(0,.29,1.17),35),(.53,(-.76,-4.21,2.72),(0,.24,1.24),37),
+                              (.54,(-2.9,-1.62,1.85),(.65,.33,1.68),44),(1,(-2.57,-1.61,1.87),(.59,.32,1.66),48)])
+    else:
+        market_character_motion(jules,frames,[(0,(.60,.30,0),(0,0),(0,0),-.54),(.31,(.38,.14,0),(-.84,0),(.46,0),.18),
+                                              (.58,(.30,.09,0),(-.62,0),(.55,0),.32),(1,(.28,.07,0),(-.25,-.3),(.19,.23),.31)])
+        market_character_motion(milo,frames,[(0,(-.50,-.11,0),(0,-.33),(0,.21),.12),(.38,(-.50,-.11,0),(0,-.25),(0,.20),.56),
+                                             (1,(-.52,-.13,0),(-.18,-.37),(.24,.31),.42)])
+        market_camera(frames,[(0,(.25,-3.62,1.43),(-.16,.07,1.25),43),(.43,(.13,-2.75,1.45),(-.15,.05,1.36),47),
+                              (.44,(1.94,-2.51,2.03),(.21,.08,1.78),45),(1,(1.49,-2.02,1.98),(.21,.08,1.77),50)])
+
+
+def market_rooftop(frames,m):
+    box("Roof",(0,.63,-.15),(11,8,.30),m["concrete"])
+    box("Parapet",(0,2.43,.51),(11,.27,1.02),m["brick"])
+    for index,x in enumerate((-6,-3.7,-1.9,.3,2.7,5.1,7.1)):
+        high = (index*7%5)*.59+2.2
+        box("Distant building",(x,6,-1.6+high/2),(1.9,2.04,high),m["navy"] if index%2 else m["violet"])
+        for z in (.45,1.08):
+            box("Lit windows",(x,4.96,z-.71),(1.14,.07,.22),m["glass"])
+    phone=market_phone((.46,-.19,1.47),m["navy"],m["violet"],"WILL MILO TELL?","YES")
+    keys(phone,"rotation_euler",[(1,(.42,0,-.37)),(int(frames*.46),(.12,0,.05)),
+                                (int(frames*.52),(.13,0,-.05)),(frames,(.13,0,.01))])
+    keys(phone,"location",[(1,(.46,.14,1.22)),(int(frames*.50),(.46,-.19,1.47)),
+                            (frames,(.46,-.19,1.47))])
+    jules=market_actor("jules",(-1.04,.65,0),.25)
+    milo=market_actor("milo",(1.22,.49,0),-.42)
+    market_character_motion(jules,frames,[(0,(-1.04,.92,0),(0,0),(0,0),0),(.54,(-.94,.56,0),(0,-.46),(0,.32),.34),
+                                           (1,(-.82,.46,0),(0,-.73),(0,.55),.51)])
+    market_character_motion(milo,frames,[(0,(1.22,.73,0),(0,0),(0,0),0),(.51,(1.18,.52,0),(-.54,0),(.28,0),.21),
+                                         (1,(1.13,.51,0),(-.63,0),(.33,0),.29)])
+    market_camera(frames,[(0,(-4.9,-5.6,4.35),(.0,.85,1.27),38),(.37,(-3.7,-4.4,3.47),(0,.69,1.46),39),
+                          (.38,(.15,-2.31,1.91),(.46,-.04,1.39),47),(.72,(.09,-1.97,1.83),(.46,-.19,1.45),52),
+                          (.73,(-2.66,-2.88,1.96),(-.55,.43,1.65),42),(1,(-2.33,-2.58,1.90),(-.52,.42,1.66),47)])
 
 
 def stage_market(action, frames):
-    navy = material("Midnight paving", (.038, .055, .13))
-    violet = material("Storefront violet", (.20, .054, .36))
-    mint = material("Ticker mint", (.08, .94, .46))
-    pink = material("Ticker pink", (1, .095, .34))
-    blue = material("Ticker blue", (.105, .46, .92))
-    for shade in (mint, pink, blue, yellow):
-        shader = shade.node_tree.nodes.get("Principled BSDF")
-        shader.inputs["Emission Color"].default_value = shade.diffuse_color
-        shader.inputs["Emission Strength"].default_value = .55
-    box("Plaza", (0, 1, -.16), (22, 22, .30), navy)
-    for x in range(-7, 8):
-        box("Paving line", (x, 1, -.007), (.021, 19, .016), blue, .003)
-    for i, x in enumerate((-6.0, -3.8, 3.8, 6.0)):
-        height = 3.6 + .7 * (i % 3)
-        box("Market storefront", (x, 3.85, height/2), (2.05, 2.65, height), violet if i%2 else navy)
-        for z in (1.24, 2.35, 3.25):
-            box("Glowing window", (x, 2.50, z), (1.26, .10, .39), blue if i%2 else pink)
-    labels = {
-        "market_hook": ("+ $1,000,000", "NAME: UNKNOWN"),
-        "market_street": ("KALSHI TOWN", "EVERYTHING HAS ODDS"),
-        "market_win": ("FOUNTAIN: GOLD", "YES WINS"),
-        "market_ticket": ("WILL MILO", "DISAPPEAR?"),
-        "market_friend": ("JULES", "VOICE LOST"),
-        "market_mayor": ("TOWN HALL", "READ THE FINE PRINT"),
-        "market_count": ("MIDNIGHT", "YES 99c"),
-        "market_trade": ("LAST DOLLAR", "NO"),
-        "market_blackout": ("00:00", "WHO IS MILO?"),
-        "market_end": ("NEW MARKET", "WILL MILO TELL?"),
+    m = {
+        "navy": material("Midnight blue",(.037,.046,.118)),
+        "violet": material("Purple",(.27,.11,.47)),
+        "pink": material("Pink vinyl",(.78,.13,.33)),
+        "brick": material("Burnt brick",(.52,.18,.106)),
+        "grass": material("Green",(.105,.31,.22)),
+        "glass": material("Blue glass",(.23,.56,.86)),
+        "concrete": material("Pavement",(.39,.42,.5)),
+        "mint": material("Mint",(.1,.85,.48)),
     }
-    board = group("Market board", (0, 2.76, 2.70))
-    piece(board, "Ticker frame", (0, 0, 0), (4.10, .25, 1.28), violet, .10)
-    piece(board, "Ticker display", (0, -.145, 0), (3.9, .027, 1.08), ink, .04)
-    headline, status = labels[action]
-    market_lettering(headline, (0, -.184, .19), .34, mint if action != "market_end" else pink, board)
-    market_lettering(status, (0, -.185, -.25), .25, cream, board)
-    for side in (-1, 1):
-        piece(board, "Mount", (side*1.69, .05, -1.34), (.14, .14, 2.70), violet)
-    market_prop(action, frames, navy, mint, pink, violet)
-    milo = roblox_actor("Milo", (0, -.03, 0), violet, brown, .11, False, costume="milo")
-    market_gesture(milo, frames, 1.04 if action in {"market_hook","market_trade","market_count"} else .63)
-    if action != "market_ticket":
-        jules = roblox_actor("Jules", (-1.47, .37, .025), pink, ink, .24, False, costume="jules")
-        market_gesture(jules, frames, 1.0 if action in {"market_friend","market_win"} else .57, 1)
-    if action != "market_friend":
-        mayor = roblox_actor("Mayor", (1.47, .43, 0), mint, brown, -.24, True, costume="mayor")
-        market_gesture(mayor, frames, .87, 1)
-    if action in {"market_win", "market_trade", "market_hook"}:
-        for i in range(19):
-            x = ((i*37) % 101) / 21 - 2.4
-            z = 1 + ((i*13) % 43) / 16
-            token = box("Market confetti", (x, .45, z), (.093, .041, .14),
-                        (yellow, mint, pink)[i%3], .012)
-            hit = max(2, int(frames*.31))
-            keys(token, "scale", [(1, (.001,)*3), (hit-1, (.001,)*3), (hit, (1,)*3)])
-            keys(token, "location", [(hit, (x*.32, .65, 1.2)),
-                                     (frames, (x, -.7+(i%5)*.27, z+.32))])
-            keys(token, "rotation_euler", [(hit, (0, 0, 0)), (frames, (i*.7, i*.37, i*.2))])
-    if action in {"market_count", "market_end"}:
-        neon = piece(board, "Pulse bar", (0, -.19, -.49), (3.72, .045, .062), pink, .012)
-        keys(neon, "scale", [(1, (1, 1, 1)), (frames, (.04, 1, 1))])
-    if action == "market_count":
-        for index, numeral in enumerate(("3", "2", "1")):
-            digit = market_lettering(numeral, (0, -.2, .69), .58, pink, board)
-            onset = 1 + int(frames * (.39 + index*.15))
-            end = 1 + int(frames * (.53 + index*.15))
-            keys(digit, "scale", [(1, (.001,)*3), (onset-1, (.001,)*3), (onset, (1.16,)*3),
-                                  (min(end-1, onset+4), (.88,)*3), (end, (.001,)*3)])
-    light("AREA", (-3, -2.9, 4.4), 785, (.55, .72, 1), (0, 1, 1.2), 3.9)
-    light("AREA", (3, -1.7, 3.8), 575, (1, .57, .69), (0, 0, 1.4), 3.0)
-    light("AREA", (0, 2.18, 4.85), 690, (.37, 1, .8), (0, 0, 1.0), 3.2)
-    if action == "market_blackout":
-        midpoint = frames // 2
-        for lamp in (obj.data for obj in scene.objects if obj.type == "LIGHT"):
-            full = lamp.energy
-            keys(lamp, "energy", [(1, full), (midpoint-1, full), (midpoint, full*.08),
-                                  (int(frames*.73), full*.10), (int(frames*.76), full*.96)])
-    sky.inputs["Color"].default_value = (.095, .155, .39, 1)
-    market_camera(action, frames)
+    shots = {
+        "market_street": market_school, "market_win": market_fountain,
+        "market_ticket": market_bedroom, "market_friend": market_diner,
+        "market_mayor": market_office, "market_count": market_raffle,
+        "market_trade": market_booth, "market_end": market_rooftop,
+    }
+    if action in {"market_hook", "market_blackout"}:
+        market_crossing(action,frames,m)
+    else:
+        shots[action](frames,m)
+    outside = action in {"market_street","market_win","market_count","market_blackout","market_hook","market_end"}
+    is_day = action in {"market_street","market_win"}
+    sky.inputs["Color"].default_value = (.31,.54,.88,1) if is_day else (.045,.085,.28,1)
+    light("AREA",(-3.1,-3.6,4.2),700 if is_day else 465,
+          (1,.84,.71) if is_day else (.55,.65,1),(0,.55,1.15),4.4)
+    light("AREA",(3.2,-1.55,3.7),420,(1,.73,.70) if outside else (1,.79,.56),(0,.53,1.2),3.5)
+    light("AREA",(0,2.15,4.8),635,(.57,.77,1) if outside else (.59,.78,1),(0,0,1.0),3.4)
+    if action=="market_blackout":
+        midpoint=frames//2
+        for lamp in (obj.data for obj in scene.objects if obj.type=="LIGHT"):
+            full=lamp.energy
+            keys(lamp,"energy",[(1,full),(midpoint-2,full),(midpoint,full*.045),(frames,full*.06)])
 
 
 episode_path, index, duration, width, fps, engine, target = sys.argv[sys.argv.index("--")+1:]

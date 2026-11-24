@@ -1,11 +1,11 @@
 {
-  "title": "The Door That Knocked Back",
+  "title": "Mom's Yellow Doors",
   "shots": [
-    {"action":"town","line":"In this town, every time you tell a lie, a new door appears in your house."},
-    {"action":"lie","line":"When Mom asked who broke the clock, I blamed the cat."},
-    {"action":"appear","line":"A yellow door popped up right behind her."},
-    {"action":"knock","line":"Then someone knocked. Three times."},
-    {"action":"open","line":"Behind it was another me, holding the clock. Still ticking."},
-    {"action":"twist","line":"Mom looked right at him and said, I only have one son. The whole hallway turned yellow."}
+    {"action":"town","line":"In this town, every lie makes a yellow door. What's behind it? The truth."},
+    {"action":"lie","line":"When Mom saw her smashed clock, I said the cat did it."},
+    {"action":"appear","line":"A yellow door punched through the wall. Mom grabbed my wrist."},
+    {"action":"knock","line":"Whatever you hear, she said, don't open it."},
+    {"action":"open","line":"The other me was inside, holding the hammer I'd hidden. Mom said he wasn't real."},
+    {"action":"twist","line":"Then every door in the hallway turned yellow. And every one of them knocked."}
   ]
 }

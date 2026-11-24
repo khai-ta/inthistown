@@ -56,15 +56,34 @@ def keys(obj, prop, values):
         obj.keyframe_insert(data_path=prop, frame=frame)
 
 
-def actor(name, pos, shirt, hair, skin, yaw=0):
+def actor(name, pos, shirt, hair, skin, yaw=0, adult=False):
     rig = group(name, pos)
     rig.rotation_euler.z = yaw
     piece(rig, "Sweatshirt", (0, 0, 1.27), (.69, .43, .68), shirt, .07)
+    piece(rig, "Ribbed hem", (0, -.018, .967), (.63, .438, .10), shirt, .025)
+    piece(rig, "Collar", (0, -.035, 1.58), (.39, .39, .09), cream, .035)
+    if adult:
+        for height in (1.20, 1.34, 1.47):
+            piece(rig, "Cardigan button", (0, -.229, height), (.047, .025, .043), cream, .009)
+    else:
+        piece(rig, "Kangaroo pocket", (0, -.216, 1.13), (.42, .058, .18), shirt, .04)
+        for side in (-1, 1):
+            piece(rig, "Drawstring", (side * .085, -.226, 1.454), (.017, .023, .15), cream, .005)
+        piece(rig, "Folded hood", (0, .199, 1.52), (.51, .20, .28), shirt, .068)
     head = group("Head", (0, 0, 1.91))
     head.parent = rig
     piece(head, "Head", (0, 0, 0), (.61, .55, .58), skin, .09)
     piece(head, "Hair", (0, .01, .255), (.65, .57, .18), hair, .06)
-    piece(head, "Fringe", (-.16, -.264, .157), (.28, .085, .15), hair)
+    fringe = piece(head, "Fringe", (-.14, -.27, .17), (.34, .087, .132), hair)
+    fringe.rotation_euler.y = -.15
+    if adult:
+        piece(head, "Bob", (0, .16, .01), (.64, .36, .50), hair, .085)
+        for side in (-1, 1):
+            piece(head, "Hair side", (side*.268, .035, -.045), (.12, .37, .38), hair, .042)
+            piece(head, "Earring", (side*.275, -.106, -.147), (.057, .045, .070), amber, .022)
+    else:
+        for x, height in ((-.14, .305), (.012, .316), (.15, .299)):
+            piece(head, "Swept hair", (x, -.053, height), (.20, .39, .10), hair, .041)
     legs = []
     for side in (-1, 1):
         piece(head, "Eye", (side*.124, -.276, .015), (.054, .033, .078), ink)
@@ -74,7 +93,10 @@ def actor(name, pos, shirt, hair, skin, yaw=0):
         leg.parent = rig
         piece(leg, "Jeans", (0, 0, -.39), (.32, .36, .65), denim)
         piece(leg, "Sneaker", (0, -.066, -.797), (.34, .48, .24), cream)
+        piece(leg, "Sole", (0, -.072, -.887), (.351, .493, .061), ink, .024)
+        piece(leg, "Laces", (0, -.181, -.675), (.18, .15, .028), cream, .01)
         legs.append(leg)
+    piece(head, "Nose", (0, -.274, -.045), (.083, .059, .070), skin, .023)
     piece(head, "Mouth", (0, -.277, -.12), (.13, .03, .035), ink, .01)
     arms = []
     for side in (-1, 1):
@@ -192,6 +214,10 @@ def hallway(action, frames):
     opening = material("Doorway shadow", (.026, .033, .051))
     rug = material("Runner", (.36, .047, .073))
     box("Floor", (0, 0, -.11), (10, 12, .22), wood)
+    box("Ceiling", (0, .45, 4.06), (6.4, 7.3, .13), cream)
+    box("Pendant cable", (0, .95, 3.79), (.034, .034, .48), ink, .007)
+    box("Pendant shade", (0, .95, 3.55), (.52, .49, .16), amber, .05)
+    box("Pendant diffuser", (0, .95, 3.465), (.39, .35, .035), cream, .015)
     for i in range(-9, 10):
         box("Floorboard seam", (i*.52, 0, .003), (.016, 12, .009), brown, .002)
     box("Hall runner", (0, .2, .015), (2.2, 5.15, .035), rug)
@@ -210,15 +236,19 @@ def hallway(action, frames):
         box("Console leg", (x, 1.84, .4), (.11, .41, .8), brown)
     broken = clock("Broken clock", (-2.25, 1.76, .99), .65)
     broken.rotation_euler = (.9, .15, -.4)
-    cat((-1.87, 1.83, .92), frames)
+    cat((-.48, .59, .026), frames)
     for x in (-2.1, 2.08):
-        box("Picture frame", (x, 2.51, 2.23), (.7, .08, .82), cream)
-        box("Picture", (x, 2.45, 2.23), (.51, .06, .63), coral if x < 0 else teal)
+        box("Picture frame", (x, 2.51, 2.76), (.57, .08, .65), cream)
+        box("Picture", (x, 2.45, 2.76), (.42, .06, .49), coral if x < 0 else teal)
     _, kid_head, kid_arms, _ = actor("Narrator", (-1.13, .15, 0), teal, brown, peach, .36)
-    mom, mom_head, _, _ = actor("Mom", (1.1, .78, 0), coral, ink, peach, -.38)
+    mom, mom_head, mom_arms, _ = actor("Mom", (1.1, .78, 0), coral, ink, peach, -.38, adult=True)
     mom.scale = (1.1,)*3
     keys(kid_head, "rotation_euler", [(1, (0, 0, -.10)), (frames, (.11, 0, .37))])
     keys(mom_head, "rotation_euler", [(1, (.04, 0, 0)), (frames, (-.12, 0, -.28))])
+    if action in {"lie", "appear"}:
+        if action == "appear":
+            keys(mom_arms[0], "rotation_euler", [(1, (0, 0, 0)), (frames//3, (-.6, -.12, .65)),
+                                              (frames, (-.48, -.15, .56))])
     if action == "lie":
         box("Unbroken wall", (0, 2.65, 1.45), (2.04, .21, 2.93), wall)
         keys(kid_arms[0], "rotation_euler", [(1, (0, 0, 0)), (frames//2, (-.9, .2, -.25)), (frames, (-.15, 0, 0))])
@@ -248,27 +278,42 @@ def hallway(action, frames):
             else:
                 hinge.rotation_euler.z = angle
             double, _, double_arms, _ = actor("Double", (.18, 3.03, .06), teal, brown, peach, -.13)
-            prop = clock("Ticking clock", (.1, -.44, 1.38), .7, frames)
+            prop = group("Hidden hammer", (.205, -.465, 1.39))
             prop.parent = double
+            prop.rotation_euler.y = -.35
+            piece(prop, "Handle", (0, 0, 0), (.073, .085, .50), brown, .013)
+            piece(prop, "Steel head", (0, 0, .228), (.36, .132, .155), ink, .025)
+            piece(prop, "Striking face", (.174, 0, .227), (.06, .153, .16), denim, .014)
             keys(double, "location", [(1, (.18, 3.03, .06)), (frames, (.18, 1.91, .06))])
             for arm in double_arms:
                 arm.rotation_euler.x = -.8
+    for index, x in enumerate((-2.06, 2.06)):
+        door = box("Hall closet", (x, 2.51, 1.05), (1.05, .105, 2.1), brown)
+        inset = box("Closet panel", (x, 2.445, 1.33), (.79, .04, 1.35), wood)
+        box("Closet knob", (x + .34, 2.397, 1.04), (.093, .09, .093), ink, .022)
         if action == "twist":
-            wall.use_nodes = True
-            color = wall.node_tree.nodes.get("Principled BSDF").inputs["Base Color"]
-            color.default_value = wall.diffuse_color
-            color.keyframe_insert(data_path="default_value", frame=int(frames*.58))
-            color.default_value = (*yellow.diffuse_color[:3], 1)
-            color.keyframe_insert(data_path="default_value", frame=int(frames*.8))
-    light("AREA", (-2, -3, 4), 470, (1, .79, .63), (0, 1, 1), 5)
-    light("AREA", (2, 1, 3.8), 360, (.63, .79, 1), (0, 1, 1), 4)
+            start = int(frames * (.39 + index * .11))
+            for obj, color in ((door, yellow), (inset, amber)):
+                obj.data.materials[0] = obj.data.materials[0].copy()
+                shader = obj.data.materials[0].node_tree.nodes.get("Principled BSDF")
+                value = shader.inputs["Base Color"]
+                value.keyframe_insert(data_path="default_value", frame=start)
+                value.default_value = color.diffuse_color
+                value.keyframe_insert(data_path="default_value", frame=start + 4)
+            wobble = [(1, (0, 0, 0))]
+            for fraction in (.69, .8, .87):
+                beat = int(frames * fraction)
+                wobble.extend([(beat-1, (0, 0, 0)), (beat, (-.027, 0, 0)), (beat+2, (0, 0, 0))])
+            keys(door, "rotation_euler", wobble)
+    light("AREA", (-2, -3, 3.65), 420, (1, .79, .63), (0, 1, 1), 5)
+    light("AREA", (2, 1, 3.65), 265, (.63, .79, 1), (0, 1, 1), 4)
     light("AREA", (0, 3.65, 2.6), 90, (.72, .62, 1), (0, 1, 1), 1.5)
     shots = {
         "lie": ((-.05, -4, 1.94), (.19, -3.65, 1.87), (-.35, .64, 1.3), 32),
         "appear": ((2.14, -3.8, 2.16), (1.72, -3.35, 2), (.27, 1.9, 1.5), 37),
         "knock": ((.28, -.56, 1.81), (.19, .02, 1.74), (.22, 2.39, 1.53), 50),
-        "open": ((1.02, -1.58, 1.9), (.66, -.68, 1.8), (.27, 2.29, 1.36), 40),
-        "twist": ((2.22, -3.98, 2.2), (2.53, -4.18, 2.39), (.12, 1.27, 1.42), 35),
+        "open": ((.54, -.67, 1.86), (.63, -.35, 1.80), (.20, 2.31, 1.42), 44),
+        "twist": ((.56, -2.95, 2.05), (.32, -5.14, 2.41), (0, 1.91, 1.62), 32),
     }
     camera(*shots[action], frames)
 

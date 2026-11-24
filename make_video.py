@@ -13,7 +13,7 @@ import wave
 
 from dotenv import dotenv_values
 
-from episode import read_episode
+from episode import MARKET_ACTIONS, read_episode
 from eleven_voice import ADAM_VOICE, DEFAULT_MODEL, DEFAULT_VOICE, speak
 from fetch_avatar import TARGET as AVATAR_FILE
 
@@ -52,7 +52,13 @@ def caption_time(seconds):
     return f"{hours}:{minutes:02}:{whole:02}.{fraction:02}"
 
 
-def captions(line, seconds, offset, words=None, single_word=False):
+def market_caption_margin(action):
+    if action not in MARKET_ACTIONS:
+        return 0
+    return 180 if action in {"market_win", "market_mayor", "market_trade"} else 225
+
+
+def captions(line, seconds, offset, words=None, single_word=False, margin=0):
     if not words:
         tokens = line.split()
         step = seconds / len(tokens)
@@ -78,7 +84,7 @@ def captions(line, seconds, offset, words=None, single_word=False):
         end = min(seconds, next_start, max(group[-1][2], start + .22) + .07)
         if end > start:
             text = " ".join(item[0] for item in group)
-            events.append(f"Dialogue: 0,{caption_time(base + start)},{caption_time(base + end)},Story,,0,0,0,,{text}")
+            events.append(f"Dialogue: 0,{caption_time(base + start)},{caption_time(base + end)},Story,,0,0,{margin},,{text}")
     return events
 
 
@@ -205,7 +211,9 @@ def render_episode(args):
             speech, words = narration(args, episode["shots"], index, work, tracks)
             frames = max(12, math.ceil((speech + PAD_START + PAD_END) * args.fps))
             duration = frames / args.fps
-            events.extend(captions(shot["line"], speech, total_frames / args.fps, words, shorts_style))
+            margin = market_caption_margin(shot["action"])
+            events.extend(captions(shot["line"], speech, total_frames / args.fps, words,
+                                   shorts_style, margin))
             stem = f"shot-{index:03d}-"
             with (work / "render.log").open("w") as log:
                 result = subprocess.run([

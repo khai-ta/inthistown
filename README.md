@@ -47,3 +47,18 @@ Local narration captions estimate word timings from line durations. Foreground s
 .venv/bin/python -m unittest discover -s tests
 ffprobe -v error -show_entries stream=codec_name,codec_type,width,height,r_frame_rate,duration output/moms-yellow-doors.mp4
 ```
+
+## Render The Door With My Name
+
+This longer episode uses Roblox's [official Blocky R15 reference avatar](https://create.roblox.com/docs/avatar/resources) for the cast, with custom colors and face details. Download the FBX once, then generate Adam narration at 1.35×. FFmpeg preserves the pitch and scales the ElevenLabs word timings to match.
+
+```sh
+.venv/bin/python fetch_avatar.py
+.venv/bin/python make_video.py episodes/yellow-doors.json --provider elevenlabs --voice Adam --tempo 1.35 --width 540 -o output/the-door-with-my-name.mp4
+```
+
+To mix a local copy of “Numbers” by TEMPOREX under the narration, run the following. Adjust `--music-start` in seconds or `--music-gain` as needed. The soundtrack is a separate input and the picture is copied at its original quality.
+
+```sh
+.venv/bin/python mix_music.py output/the-door-with-my-name.mp4 "/path/to/Numbers.mp3" output/the-door-with-my-name-numbers.mp4
+```

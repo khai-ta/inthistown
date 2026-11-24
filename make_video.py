@@ -13,7 +13,7 @@ import wave
 
 from dotenv import dotenv_values
 
-from episode import MARKET_ACTIONS, read_episode
+from episode import MARKET_ACTIONS, PARTY_ACTIONS, read_episode
 from eleven_voice import ADAM_VOICE, DEFAULT_MODEL, DEFAULT_VOICE, speak
 from fetch_avatar import TARGET as AVATAR_FILE
 
@@ -53,6 +53,8 @@ def caption_time(seconds):
 
 
 def market_caption_margin(action):
+    if action in PARTY_ACTIONS:
+        return 202
     if action not in MARKET_ACTIONS:
         return 0
     return 180 if action in {"market_win", "market_mayor", "market_trade"} else 225
@@ -128,7 +130,13 @@ def narration(args, shots, index, work, tracks):
 
 
 def sound_effect(path, action, duration):
-    if action in {"market_win", "market_trade", "market_end"}:
+    if action == "party_knock":
+        cues = [(duration*t, 110, .20, .15) for t in (.11,.16,.21)]
+    elif action == "party_power":
+        cues = [(duration*.56, 73, .29, .13)]
+    elif action == "party_beat":
+        cues = [(duration*t, pitch, .099, .19) for t,pitch in ((.28,420),(.44,610))]
+    elif action in {"market_win", "market_trade", "market_end"}:
         cues = [(duration * .31 + i*.068, pitch, .17, .115) for i, pitch in
                 enumerate((392, 523, 659) if action != "market_end" else (466, 349, 196))]
     elif action in {"market_hook", "market_count", "market_blackout"}:

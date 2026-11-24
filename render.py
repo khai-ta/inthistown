@@ -8,7 +8,8 @@ import bpy
 from mathutils import Vector
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from episode import MARKET_ACTIONS, read_episode
+from episode import MARKET_ACTIONS, PARTY_ACTIONS, read_episode
+from party_scene import stage_party
 from fetch_avatar import TARGET as AVATAR_FILE
 
 
@@ -98,6 +99,14 @@ def expressive_face(face, costume):
         "market_blackout": ("worried","open") if costume != "jules" else ("worried","worried"),
         "market_hook": ("worried","smile"),
         "market_end": ("smile","worried"),
+        "party_street": ("worried","worried"),
+        "party_bedroom": ("worried","worried"),
+        "party_knock": ("smile","smile"),
+        "party_invite": ("worried","smile") if costume == "party_leo" else ("smile","smile"),
+        "party_power": ("smile","open"),
+        "party_beat": ("worried","smile"),
+        "party_lantern": ("open","smile"),
+        "party_end": ("smile","smile"),
     }
     first, last = lead_moods[shot["action"]]
     if costume and costume.startswith("crowd"):
@@ -142,6 +151,13 @@ def roblox_actor(name, pos, shirt, hair, yaw, adult, costume=None):
     shoe = ink
     if costume and costume.startswith("crowd"):
         skin = material(name + " skin", (.48,.24,.11) if costume=="crowd_bun" else (.77,.47,.28))
+    if costume == "party_michael":
+        skin = material("Michael skin", (.45,.23,.145))
+        pants = material("Michael trousers", (.095,.15,.125))
+    elif costume == "party_leo":
+        skin = material("Leo skin", (.72,.43,.25))
+        pants = material("Leo joggers", (.125,.165,.27))
+        shoe = cream
     if costume == "jules":
         skin = material("Jules skin", (.51, .255, .14))
         pants = material("Jules overalls", (.035, .22, .20))
@@ -231,7 +247,21 @@ def roblox_actor(name, pos, shirt, hair, yaw, adult, costume=None):
         else:
             piece(face,"High bun",(0,.17,2.28),(.25,.24,.22),hair,.083)
             piece(rig,"Crossbody strap",(0,-.224,1.32),(.08,.031,.61),accent,.012).rotation_euler.y = -.44
-    if shot["action"] in MARKET_ACTIONS:
+    if costume == "party_leo":
+        auburn = material("Leo auburn", (.38,.09,.036))
+        for i in range(3):
+            part = piece(face,"Swept locks",(-.16+i*.155,-.07,2.205-i*.034),(.23,.38,.13),auburn,.051)
+            part.rotation_euler.y = -.32
+        piece(rig,"Sport stripe",(0,-.224,1.44),(.48,.019,.072),cream,.007)
+        piece(rig,"Kangaroo pocket",(0,-.228,1.12),(.44,.033,.171),denim,.028)
+    elif costume == "party_michael":
+        for i in range(6):
+            piece(face,"Short twists",(-.194+i*.076,.045+(i%2)*.045,2.193),(.109,.38,.15),ink,.048)
+        piece(face,"Yellow headband",(0,-.243,2.122),(.52,.081,.061),yellow,.022)
+        piece(rig,"Jacket zipper",(0,-.229,1.32),(.045,.021,.46),ink,.012)
+        for x in (-.158,.158):
+            piece(rig,"Jacket pocket",(x,-.226,1.17),(.13,.035,.12),brown,.014)
+    if shot["action"] in MARKET_ACTIONS | PARTY_ACTIONS:
         expressive_face(face, costume)
     bpy.context.view_layer.update()
     world = face.matrix_world.copy()
@@ -239,6 +269,10 @@ def roblox_actor(name, pos, shirt, hair, yaw, adult, costume=None):
     face.parent_type = "BONE"
     face.parent_bone = head.name
     face.matrix_world = world
+    if costume == "party_leo":
+        rig.scale = (.89,.91,.95)
+    elif costume == "party_michael":
+        rig.scale = (1.02,.99,1.06)
     if costume == "jules":
         rig.scale = (.84, .88, .91)
     elif costume == "mayor":
@@ -1419,7 +1453,7 @@ sky = scene.world.node_tree.nodes.get("Background")
 sky.inputs["Color"].default_value = (.32, .48, .76, 1)
 sky.inputs["Strength"].default_value = .65
 scene.render.engine = engine
-dressed_interior = shot["action"] in {"market_ticket", "market_friend", "market_mayor"}
+dressed_interior = shot["action"] in {"market_ticket", "market_friend", "market_mayor", "party_bedroom", "party_invite", "party_power", "party_beat"}
 scene.eevee.taa_render_samples = 16 if dressed_interior or not shorts_style else 8
 scene.render.use_persistent_data = True
 scene.cycles.samples = 8
@@ -1443,7 +1477,9 @@ denim = material("Denim", (.055, .113, .27))
 red = material("Red", (.64, .055, .044))
 yellow = material("Yellow", (.98, .62, .049))
 amber = material("Amber", (.81, .36, .018))
-if shot["action"] in MARKET_ACTIONS:
+if shot["action"] in PARTY_ACTIONS:
+    stage_party(sys.modules[__name__], shot["action"], frames)
+elif shot["action"] in MARKET_ACTIONS:
     stage_market(shot["action"], frames)
 elif shot["action"] in {"town", "dusk", "streetdoor"}:
     town(frames, shot["action"])

@@ -13,9 +13,9 @@ import wave
 
 from dotenv import dotenv_values
 
-from episode import MARKET_ACTIONS, read_episode
+from episode import read_episode
 from eleven_voice import ADAM_VOICE, DEFAULT_MODEL, DEFAULT_VOICE, speak
-from fetch_avatar import MARKET_ASSETS, TARGET as AVATAR_FILE
+from fetch_avatar import TARGET as AVATAR_FILE
 
 ROOT = Path(__file__).resolve().parent
 SAMPLE_RATE = 48000
@@ -190,9 +190,6 @@ def render_episode(args):
     episode = read_episode(episode_path)
     if episode.get("avatar") == "roblox-r15" and not AVATAR_FILE.is_file():
         raise ValueError("Run python fetch_avatar.py to download Roblox’s blocky R15 rig")
-    if any(shot["action"] in MARKET_ACTIONS for shot in episode["shots"]):
-        if not all(AVATAR_FILE.with_name(name + ".fbx").is_file() for name in MARKET_ASSETS):
-            raise ValueError("Run python fetch_avatar.py --market to download the market cast")
     shorts_style = episode.get("style") == "shorts"
     tracks = imported_tracks(args.narration_dir.resolve(), len(episode["shots"])) if args.narration_dir else []
     output.parent.mkdir(parents=True, exist_ok=True)

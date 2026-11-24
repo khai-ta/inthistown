@@ -65,10 +65,10 @@ To mix a local copy of “Numbers” by TEMPOREX under the narration, run the fo
 
 ## Render Everybody Bet Yes
 
-The Kalshi-town episode uses three [official Roblox avatar bodies](https://create.roblox.com/docs/avatar/resources) with different silhouettes and rigs. Milo uses the Classic Blocky body with a beanie, Jules uses Nature Girl, and the mayor uses Stylish Male. Its edit uses moving cameras, bent-joint animation, phone and fountain inserts, animated captions and original sound effects.
+The Kalshi-town episode uses the [official Roblox Blocky R15 rig](https://create.roblox.com/docs/avatar/resources) with three custom avatar designs. Milo wears a varsity hoodie and beanie, Jules has a compact build with overalls and double puffs, and the mayor has a broad build with a suit and fedora. Its edit uses moving cameras, bent-joint animation, phone and fountain inserts, animated captions and original sound effects.
 
 ```sh
-.venv/bin/python fetch_avatar.py --market
+.venv/bin/python fetch_avatar.py
 .venv/bin/python make_video.py episodes/kalshi-town.json --provider elevenlabs --voice Adam --tempo 1.4 -o output/everybody-bet-yes-voice.mp4
 .venv/bin/python mix_music.py output/everybody-bet-yes-voice.mp4 "/path/to/TempoRex Instrumental.mp3" output/everybody-bet-yes.mp4 --music-gain .30
 ```

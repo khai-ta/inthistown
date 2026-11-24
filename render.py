@@ -57,47 +57,37 @@ def keys(obj, prop, values):
         obj.keyframe_insert(data_path=prop, frame=frame)
 
 
-def roblox_actor(name, pos, shirt, hair, yaw, adult, model=None, market_lead=False):
+def roblox_actor(name, pos, shirt, hair, yaw, adult, costume=None):
     before = set(bpy.data.objects)
-    source = AVATAR_FILE if model is None else AVATAR_FILE.with_name(model + ".fbx")
-    bpy.ops.import_scene.fbx(filepath=str(source), use_anim=False)
+    bpy.ops.import_scene.fbx(filepath=str(AVATAR_FILE), use_anim=False)
     imported = set(bpy.data.objects) - before
     armature = next(obj for obj in imported if obj.type == "ARMATURE")
-    meshes = []
-    for obj in imported:
-        if obj.type != "MESH":
-            continue
-        part = obj.name.split(".")[0]
-        removable = any(label in part for label in ("Cage", "_Att"))
-        if part.endswith("_Geo") or (model is not None and obj.parent == armature and not removable):
-            meshes.append(obj)
-        elif model == "NatureGirl" and part == "NatureArcherGirl_Hair":
-            world = obj.matrix_world.copy()
-            obj.parent = armature
-            obj.matrix_world = world
-            meshes.append(obj)
+    meshes = [obj for obj in imported if obj.type == "MESH" and obj.name.split(".")[0].endswith("_Geo")]
     bpy.context.view_layer.update()
     foot = min((obj.matrix_world @ Vector(corner)).z for obj in meshes for corner in obj.bound_box)
     top = max((obj.matrix_world @ Vector(corner)).z for obj in meshes for corner in obj.bound_box)
     size = 2.2 / (top - foot)
     for obj in imported - set(meshes) - {armature}:
         bpy.data.objects.remove(obj, do_unlink=True)
+    skin = peach
+    pants = denim
+    shoe = ink
+    if costume == "jules":
+        skin = material("Jules skin", (.51, .255, .14))
+        pants = material("Jules overalls", (.035, .22, .20))
+        shoe = cream
+    elif costume == "mayor":
+        skin = material("Mayor skin", (.68, .39, .24))
+        pants = shirt
     for mesh in meshes:
-        if model is not None:
-            for mat in mesh.data.materials:
-                if mat and mat.use_nodes and mesh.name.split(".")[0].endswith("_Geo"):
-                    for link in list(mat.node_tree.links):
-                        if link.to_socket.name == "Alpha":
-                            mat.node_tree.links.remove(link)
-            continue
         body = mesh.name.split(".")[0]
-        color = peach if body == "Head_Geo" else shirt
+        color = skin if body == "Head_Geo" else shirt
         if "Leg" in body:
-            color = denim
+            color = pants
         elif "Foot" in body:
-            color = ink
+            color = shoe
         elif "Hand" in body:
-            color = peach
+            color = skin
         mesh.data.materials.clear()
         mesh.data.materials.append(color)
     rig = group(name, pos)
@@ -110,33 +100,64 @@ def roblox_actor(name, pos, shirt, hair, yaw, adult, model=None, market_lead=Fal
     legs = [armature.pose.bones[side + "UpperLeg"] for side in ("Right", "Left")]
     for bone in [head, *arms, *legs]:
         bone.rotation_mode = "XYZ"
-    if model is not None:
-        return rig, head, arms, legs
     face = group("Face details", (0, 0, 0))
     face.parent = rig
     for x in (-.089, .089):
-        piece(face, "Eye", (x, -.256, 2.008), (.038, .018, .054), ink, .008)
-        piece(face, "Brow", (x, -.249, 2.074), (.075, .018, .018), hair, .006)
-    piece(face, "Mouth", (0, -.253, 1.904), (.105, .025, .027), ink, .008)
-    cap = piece(rig, "Side-part hair" if adult else "Swept hair", (0, .035, 2.15), (.51, .48, .125), hair)
-    if adult:
-        piece(rig, "Bob", (0, .19, 1.97), (.53, .20, .40), hair, .06)
+        eye = (.047, .018, .078) if costume == "jules" else (.038, .018, .054)
+        piece(face, "Eye", (x, -.260, 2.011), eye, ink, .008)
+        brow = piece(face, "Brow", (x, -.251, 2.073), (.082, .018, .019), hair, .006)
+        if costume == "mayor":
+            brow.rotation_euler.y = .21 if x > 0 else -.21
+    if costume == "jules":
+        piece(face, "Smile", (0, -.252, 1.906), (.14, .024, .042), ink, .018)
+        piece(face, "Smile highlight", (0, -.267, 1.917), (.091, .008, .010), cream, .004)
+        for side in (-1, 1):
+            piece(face, "Round curls", (side*.26, -.012, 2.025), (.18, .46, .28), hair, .071)
+            piece(face, "Puff", (side*.19, .03, 2.19), (.29, .42, .18), hair, .064)
+            piece(face, "Star earring", (side*.252, -.095, 1.929), (.052, .072, .077), yellow, .015)
+    elif costume == "mayor":
+        piece(face, "Mustache", (0, -.269, 1.943), (.188, .03, .038), hair, .010)
+        brim = piece(face, "Fedora brim", (0, .01, 2.17), (.69, .56, .055), ink, .022)
+        brim.rotation_euler.y = -.08
+        piece(face, "Fedora crown", (0, .02, 2.26), (.46, .39, .16), ink, .045)
+        piece(face, "Fedora band", (0, .02, 2.214), (.47, .40, .051), yellow, .026)
     else:
-        cap.rotation_euler.y = -.13
-        piece(rig, "Fringe", (-.13, -.177, 2.105), (.25, .11, .145), hair)
-    if market_lead:
+        piece(face, "Mouth", (0, -.253, 1.904), (.105, .025, .027), ink, .008)
+        cap = piece(face, "Hair", (0, .035, 2.15), (.51, .48, .125), hair)
+        if adult:
+            piece(face, "Bob", (0, .19, 1.97), (.53, .20, .40), hair, .06)
+        else:
+            cap.rotation_euler.y = -.13
+            piece(face, "Fringe", (-.13, -.177, 2.105), (.25, .11, .145), hair)
+    if costume == "milo":
         accent = material("Milo saffron", (.96, .38, .054))
-        piece(rig, "Knit beanie", (0, .006, 2.22), (.54, .50, .16), accent, .073)
-        piece(rig, "Beanie cuff", (0, -.01, 2.158), (.55, .49, .07), denim, .026)
+        piece(face, "Knit beanie", (0, .006, 2.24), (.55, .50, .18), accent, .073)
+        piece(face, "Beanie cuff", (0, -.01, 2.16), (.56, .49, .07), denim, .026)
+        piece(face, "Pom", (.012, .018, 2.37), (.13, .13, .13), accent, .061)
+        chest = piece(rig, "Varsity flash", (0, -.222, 1.325), (.095, .022, .245), accent, .014)
+        chest.rotation_euler.y = -.48
+    elif costume == "jules":
+        teal_strap = material("Jules straps", (.03, .35, .27))
+        for side in (-1, 1):
+            piece(rig, "Overalls strap", (side*.15, -.215, 1.35), (.09, .035, .44), teal_strap, .010)
+            piece(rig, "Strap clasp", (side*.15, -.237, 1.235), (.079, .025, .054), yellow, .008)
+        piece(rig, "Overalls bib", (0, -.216, 1.11), (.48, .04, .23), teal_strap, .021)
+    elif costume == "mayor":
+        piece(rig, "White shirtfront", (0, -.221, 1.35), (.24, .025, .44), cream, .007)
+        piece(rig, "Mayor tie", (0, -.238, 1.335), (.074, .022, .29), coral, .009)
+        for side in (-1, 1):
+            lapel = piece(rig, "Lapel", (side*.134, -.239, 1.43), (.088, .026, .27), shirt, .007)
+            lapel.rotation_euler.y = side*.24
     bpy.context.view_layer.update()
-    for accessory in list(rig.children):
-        if accessory == armature:
-            continue
-        world = accessory.matrix_world.copy()
-        accessory.parent = armature
-        accessory.parent_type = "BONE"
-        accessory.parent_bone = head.name
-        accessory.matrix_world = world
+    world = face.matrix_world.copy()
+    face.parent = armature
+    face.parent_type = "BONE"
+    face.parent_bone = head.name
+    face.matrix_world = world
+    if costume == "jules":
+        rig.scale = (.84, .88, .91)
+    elif costume == "mayor":
+        rig.scale = (1.13, 1.0, 1.10)
     return rig, head, arms, legs
 
 
@@ -673,13 +694,13 @@ def stage_market(action, frames):
     for side in (-1, 1):
         piece(board, "Mount", (side*1.69, .05, -1.34), (.14, .14, 2.70), violet)
     market_prop(action, frames, navy, mint, pink, violet)
-    milo = roblox_actor("Milo", (0, -.03, 0), violet, brown, .11, False, market_lead=True)
+    milo = roblox_actor("Milo", (0, -.03, 0), violet, brown, .11, False, costume="milo")
     market_gesture(milo, frames, 1.04 if action in {"market_hook","market_trade","market_count"} else .63)
     if action != "market_ticket":
-        jules = roblox_actor("Jules", (-1.47, .37, .025), pink, ink, .24, False, "NatureGirl")
+        jules = roblox_actor("Jules", (-1.47, .37, .025), pink, ink, .24, False, costume="jules")
         market_gesture(jules, frames, 1.0 if action in {"market_friend","market_win"} else .57, 1)
     if action != "market_friend":
-        mayor = roblox_actor("Mayor", (1.47, .43, 0), mint, brown, -.24, True, "StylishMale")
+        mayor = roblox_actor("Mayor", (1.47, .43, 0), mint, brown, -.24, True, costume="mayor")
         market_gesture(mayor, frames, .87, 1)
     if action in {"market_win", "market_trade", "market_hook"}:
         for i in range(19):

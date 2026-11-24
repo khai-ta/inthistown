@@ -736,8 +736,8 @@ def market_school(frames, m):
     for i in range(14):
         dot = box("Snow flurry", ((i*13%37)/7-2.4, .6+(i%3)*.35, 2.4), (.034, .035, .043), cream, .006)
         keys(dot, "location", [(1, dot.location.copy()), (frames, (dot.location.x+.2, dot.location.y, .05+i*.15))])
-    market_camera(frames, [(0,(7.7,-12.8,5.65),(8.4,.74,1.4),34),
-                            (.29,(4.8,-9.1,4.43),(6.0,.65,1.5),36),
+    market_camera(frames, [(0,(11.5,-4.49,4.50),(-.95,.12,1.44),34),
+                            (.29,(8.2,-4.22,3.48),(-.20,.33,1.48),36),
                             (.30,(-3.43,-6.5,3.65),(0,.7,1.26),37),
                             (.42,(-3.05,-5.88,3.21),(0,.70,1.25),37),
                             (.43,(3.65,-4.80,2.0),(1.18,-.28,1.20),44),
@@ -922,8 +922,6 @@ def market_booth(frames,m):
 
 
 def market_crossing(action,frames,m):
-    for x in range(-3,4):
-        box("Crosswalk",(.46*x,-.39,.036),(.25,2.85,.015),cream,.006)
     milo = market_actor("milo",(-.9,-.12,0),.48)
     jules = market_actor("jules",(1.0,.27,0),-.61)
     if action=="market_blackout":
@@ -1113,6 +1111,8 @@ def town_facade(x,y,width,height,wall,m,label):
             box(label+" window",(wx,y-1.805,z),(.86,.025,.70),m["glass"],.006)
             box(label+" mullion",(wx,y-1.828,z),(.047,.029,.68),cream,.006)
     market_lettering(label,(x,y-1.83,height-.57),.24,cream)
+    if label in {"DINER","LIBRARY"}:
+        box(label+" awning",(x,y-1.98,2.27),(width-.43,.60,.13),m["pink"],.03)
 
 
 def shared_market_town(action,frames,m):
@@ -1134,7 +1134,7 @@ def shared_market_town(action,frames,m):
             box("Painted road dash",(x,-2.84,.028),(.48,.074,.013),yellow,.004)
     for x in (-9,5.8):
         for index in range(7):
-            box("Main Street crosswalk",(x+(index-3)*.36,-.81,.033),(.22,.60,.010),cream,.004)
+            box("Main Street crosswalk",(x+(index-3)*.36,-2.84,.033),(.22,3.64,.010),cream,.004)
     for i,(x,y) in enumerate(((-20,3),(-16,4),(-7.6,6.9),(-4.2,6.9),(-.8,6.3),(2.2,7.1),
                                (9.8,7.25),(13,7.1),(16.6,7.3),(19.9,6.2),
                                (-17.8,-8),(-13.5,-8),(-5.9,-8),(-2.7,-8),(.7,-8),
@@ -1161,7 +1161,8 @@ def shared_market_town(action,frames,m):
     ]):
         car=town_car(x,y,direction,paint,m)
         dx,dy=((1,0),(-1,0),(0,-1),(0,1))[index]
-        keys(car,"location",[(1,(x,y,0)),(frames,(x+dx*12.8,y+dy*7.8,0))])
+        if action not in {"market_blackout","market_hook"}:
+            keys(car,"location",[(1,(x,y,0)),(frames,(x+dx*12.8,y+dy*7.8,0))])
     for x,y,hue in ((-15.7,-.67,m["sand"]),(-7.3,-4.64,m["brick"]),(2.6,-4.61,m["glass"]),
                       (10.72,-4.66,m["mint"]),(16.99,-.74,m["violet"])):
         town_car(x,y,1.57,hue,m)
@@ -1330,11 +1331,6 @@ def street_dressing(action,m):
                 box("Garden stem",(cx,cy,.20),(.031,.031,.25),m["mint"],.005)
                 box("Garden flower",(cx,cy,.32),(.125,.125,.095),hue,.034)
     elif action in {"market_count","market_blackout","market_hook"}:
-        for x in (-4.8,-2.35,2.35,4.8):
-            shade=m["goldlight"] if action != "market_blackout" else m["navy"]
-            box("Shop window divisions",(x,3.365,1.85),(.045,.029,.914),cream,.005)
-            box("Shop kick plate",(x,3.36,.39),(1.92,.09,.16),m["concrete"],.021)
-            box("Light over door",(x,3.31,2.88),(.34,.11,.10),shade,.018)
         for x in (-4.24,3.94):
             canister("Public trash can",x,1.84,.385,.25,.73,m["navy"])
             canister("Lid",x,1.84,.77,.28,.09,m["concrete"])

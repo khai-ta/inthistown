@@ -1,0 +1,11 @@
+{
+  "title": "The Door That Knocked Back",
+  "shots": [
+    {"action":"town","line":"In this town, every time you tell a lie, a new door appears in your house."},
+    {"action":"lie","line":"When Mom asked who broke the clock, I blamed the cat."},
+    {"action":"appear","line":"A yellow door popped up right behind her."},
+    {"action":"knock","line":"Then someone knocked. Three times."},
+    {"action":"open","line":"Behind it was another me, holding the clock. Still ticking."},
+    {"action":"twist","line":"Mom looked right at him and said, I only have one son. The whole hallway turned yellow."}
+  ]
+}

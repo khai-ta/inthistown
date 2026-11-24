@@ -665,6 +665,14 @@ def market_fountain(frames, m):
         cylinder.parent = fountain
         cylinder.location = (0,0,z)
         cylinder.data.materials.append(basin_material)
+    for index in range(9):
+        angle = index * 2.399
+        x, y = math.cos(angle), math.sin(angle)
+        water = piece(fountain, "Water spray", (x*.27,y*.27,1.25),
+                      (.037,.04,.32), m["glass"], .014)
+        water.rotation_euler = (y*.49,-x*.49,0)
+        keys(water,"scale",[(1,(.45,)*3),(impact-3,(1,)*3),(impact,(.001,)*3)])
+        keys(water,"location",[(1,(x*.22,y*.22,1.03)),(impact-3,(x*.43,y*.43,1.51))])
     for i in range(22):
         angle = i*2.399
         x,y = math.cos(angle), math.sin(angle)
@@ -863,6 +871,13 @@ def market_rooftop(frames,m):
                                 (int(frames*.52),(.13,0,-.05)),(frames,(.13,0,.01))])
     keys(phone,"location",[(1,(.46,.14,1.22)),(int(frames*.50),(.46,-.19,1.47)),
                             (frames,(.46,-.19,1.47))])
+    bpy.ops.mesh.primitive_cylinder_add(vertices=26,radius=.10,depth=.04)
+    dollar = bpy.context.object
+    dollar.name = "Jules's dollar"
+    dollar.data.materials.append(yellow)
+    dollar.rotation_euler.x = 1.57
+    keys(dollar,"location",[(1,(-1.06,.38,1.17)),(int(frames*.74),(-1.02,.37,1.19)),
+                            (frames,(-.63,-.08,1.52))])
     jules=market_actor("jules",(-1.04,.65,0),.25)
     milo=market_actor("milo",(1.22,.49,0),-.42)
     market_character_motion(jules,frames,[(0,(-1.04,.92,0),(0,0),(0,0),0),(.54,(-.94,.56,0),(0,-.46),(0,.32),.34),

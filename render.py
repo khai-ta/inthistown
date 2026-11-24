@@ -8,8 +8,9 @@ import bpy
 from mathutils import Vector
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from episode import MARKET_ACTIONS, PARTY_ACTIONS, read_episode
+from episode import MARKET_ACTIONS, PARTY_ACTIONS, RECRUIT_ACTIONS, read_episode
 from party_scene import stage_party
+from recruiting_scene import stage_recruiting
 from fetch_avatar import TARGET as AVATAR_FILE
 
 
@@ -108,7 +109,9 @@ def expressive_face(face, costume):
         "party_lantern": ("open","smile"),
         "party_end": ("smile","smile"),
     }
-    first, last = lead_moods[shot["action"]]
+    first, last = lead_moods.get(shot["action"], ("worried", "worried"))
+    if shot["action"] in {"recruit_accepted", "recruit_morning", "recruit_city", "recruit_ending"}:
+        last = "smile"
     if costume and costume.startswith("crowd"):
         first = "smile"
         last = "open" if shot["action"] in {"market_win","market_hook"} else "smile"
@@ -261,7 +264,7 @@ def roblox_actor(name, pos, shirt, hair, yaw, adult, costume=None):
         piece(rig,"Jacket zipper",(0,-.229,1.32),(.045,.021,.46),ink,.012)
         for x in (-.158,.158):
             piece(rig,"Jacket pocket",(x,-.226,1.17),(.13,.035,.12),brown,.014)
-    if shot["action"] in MARKET_ACTIONS | PARTY_ACTIONS:
+    if shot["action"] in MARKET_ACTIONS | PARTY_ACTIONS | RECRUIT_ACTIONS:
         expressive_face(face, costume)
     bpy.context.view_layer.update()
     world = face.matrix_world.copy()
@@ -1477,7 +1480,9 @@ denim = material("Denim", (.055, .113, .27))
 red = material("Red", (.64, .055, .044))
 yellow = material("Yellow", (.98, .62, .049))
 amber = material("Amber", (.81, .36, .018))
-if shot["action"] in PARTY_ACTIONS:
+if shot["action"] in RECRUIT_ACTIONS:
+    stage_recruiting(sys.modules[__name__], shot["action"], frames)
+elif shot["action"] in PARTY_ACTIONS:
     stage_party(sys.modules[__name__], shot["action"], frames)
 elif shot["action"] in MARKET_ACTIONS:
     stage_market(shot["action"], frames)

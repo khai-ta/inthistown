@@ -1164,6 +1164,121 @@ def market_sky(is_day, outdoors):
             polygon.use_smooth = True
 
 
+def practical_lamp(x, y, z, m, wide=.52):
+    box("Ceiling lamp mount", (x,y,z+.18), (.105,.105,.37), m["navy"], .025)
+    box("Lamp shade", (x,y,z), (wide,wide,.16), m["navy"], .044)
+    box("Glowing diffuser", (x,y,z-.088), (wide*.81,wide*.81,.037), m["goldlight"], .016)
+    light("AREA",(x,y,z-.13),82,(1,.69,.41),(x,y,0),.72)
+
+
+def room_picture(label, x, z, m):
+    box("Picture frame",(x,2.383,z),(1.16,.13,.87),brown,.026)
+    box("Picture mat",(x,2.305,z),(1.00,.024,.72),cream,.011)
+    box("Picture field",(x,2.285,z),(.83,.022,.54),m["glass"],.01)
+    market_lettering(label,(x,2.267,z),.11,m["navy"])
+
+
+def canister(name, x, y, z, radius, depth, mat):
+    bpy.ops.mesh.primitive_cylinder_add(vertices=20,radius=radius,depth=depth,location=(x,y,z))
+    bpy.context.object.name = name
+    bpy.context.object.data.materials.append(mat)
+
+
+def indoor_dressing(action, m):
+    box("Finished ceiling",(0,-.43,3.57),(9,6,.16),cream,.018)
+    box("Right wall",(4.42,-.41,1.75),(.18,6.1,3.5),m["sand"] if action=="market_mayor" else m["violet"])
+    box("Crown molding",(0,2.38,3.39),(8.8,.16,.13),cream,.021)
+    for x in (-2.88,0,2.88):
+        box("Ceiling beam",(x,-.39,3.43),(.12,5.8,.12),m["concrete"],.021)
+    if action == "market_ticket":
+        practical_lamp(-1.82,.68,3.10,m,.44)
+        box("Headboard",(-2.04,2.13,1.11),(1.83,.19,1.02),brown,.054)
+        for x in (.06,1.72):
+            box("Window curtain",(x,2.275,2.39),(.35,.11,1.45),m["pink"],.047)
+            for wrinkle in (-.10,.08):
+                box("Curtain fold",(x+wrinkle,2.196,2.40),(.062,.081,1.43),m["pink"],.022)
+        box("Curtain rod",(.88,2.20,3.13),(2.26,.10,.07),ink,.019)
+        room_picture("HOME", -2.28,2.55,m)
+        box("Dresser",(2.65,1.82,.65),(1.16,.64,1.29),brown,.04)
+        for index in range(3):
+            z=.29+index*.34
+            box("Drawer",(2.65,1.47,z),(1.06,.08,.26),m["sand"],.018)
+            box("Drawer handle",(2.65,1.407,z),(.22,.07,.055),ink,.012)
+        box("Folded blanket",(-2.04,.11,.931),(1.48,.36,.09),cream,.026)
+        canister("Desk lamp stand",.43,1.12,.99,.047,.47,ink)
+        canister("Desk lamp shade",.43,1.12,1.22,.156,.16,m["goldlight"])
+        light("AREA",(.43,1.10,1.29),22,(1,.62,.33),(.1,.78,1.21),.21)
+    elif action == "market_friend":
+        for x in (-2.55,0,2.49):
+            practical_lamp(x,.50,3.03,m,.52)
+        box("Diner tile band",(0,2.37,.72),(8.57,.082,.75),m["concrete"],.009)
+        for x in (-3.48,3.23):
+            box("Side booth table",(x,1.29,.879),(1.02,.72,.13),cream,.047)
+            box("Side booth pedestal",(x,1.29,.46),(.22,.31,.85),ink,.035)
+            for sign in (-1,1):
+                box("Seat cushion",(x,1.15+sign*.65,.50),(.96,.45,.21),m["pink"],.057)
+        for x,label in ((-2.29,"PIE"),(2.24,"SHAKES")):
+            room_picture(label,x,2.52,m)
+        canister("Ketchup",.63,.71,1.27,.055,.25,m["pink"])
+        canister("Mustard",.48,.75,1.24,.048,.20,yellow)
+        box("Napkin holder",(.34,.73,1.23),(.20,.13,.17),m["concrete"],.026)
+    else:
+        practical_lamp(-1.6,.65,3.05,m,.68)
+        practical_lamp(1.43,.65,3.05,m,.68)
+        box("Wood wainscot",(0,2.36,.58),(8.48,.094,1.10),brown,.025)
+        box("Wainscot divider",(0,2.285,1.14),(8.5,.10,.12),m["sand"],.021)
+        room_picture("TOWN SEAL",0,2.33,m)
+        box("Desk blotter",(-.18,.06,1.244),(1.50,.72,.016),m["grass"],.011)
+        canister("Stamp holder",-.87,-.09,1.31,.115,.13,m["brick"])
+        for index in range(4):
+            box("File stack",(-1.00,.32,1.25+index*.036),(.51,.35,.028),cream,.004)
+        box("Filing cabinet",(3.44,1.31,.72),(.73,.68,1.43),m["navy"],.048)
+        for z in (.27,.69,1.13):
+            box("Cabinet label",(3.44,.951,z),(.19,.040,.084),cream,.013)
+
+
+def street_dressing(action,m):
+    if action in {"market_street","market_win"}:
+        for x,y in ((-3.7,.03),(3.74,.11),(-5.2,2.9),(5.3,2.0)):
+            box("Flower bed",(x,y,.095),(1.16,.71,.17),brown,.048)
+            for i in range(7):
+                hue=(m["pink"],yellow,cream)[i%3]
+                cx=x+.35*(i%3-1)
+                cy=y+.24*(i//3-1)
+                box("Garden stem",(cx,cy,.20),(.031,.031,.25),m["mint"],.005)
+                box("Garden flower",(cx,cy,.32),(.125,.125,.095),hue,.034)
+    elif action in {"market_count","market_blackout","market_hook"}:
+        for x in (-4.8,-2.35,2.35,4.8):
+            shade=m["goldlight"] if action != "market_blackout" else m["navy"]
+            box("Shop window divisions",(x,3.365,1.85),(.045,.029,.914),cream,.005)
+            box("Shop kick plate",(x,3.36,.39),(1.92,.09,.16),m["concrete"],.021)
+            box("Light over door",(x,3.31,2.88),(.34,.11,.10),shade,.018)
+        for x in (-4.24,3.94):
+            canister("Public trash can",x,1.84,.385,.25,.73,m["navy"])
+            canister("Lid",x,1.84,.77,.28,.09,m["concrete"])
+        for x in (-1.69,1.53):
+            box("Crosswalk bollard",(x,1.49,.34),(.12,.13,.66),m["navy"],.023)
+            box("Reflector",(x,1.417,.53),(.11,.02,.085),m["goldlight"],.007)
+    elif action == "market_trade":
+        for i in range(3):
+            box("Service conduit",(-2.36,1.86+i*.10,1.95),(.10,.047,3.30),ink,.012)
+        box("Overhead fixture",(.54,2.51,3.12),(1.61,.25,.13),m["navy"],.025)
+        box("Overhead bulb",(.54,2.47,3.045),(1.42,.10,.045),m["goldlight"],.016)
+        for x in (-1.92,2.23):
+            box("Utility bin",(x,1.89,.43),(.47,.51,.86),m["concrete"],.049)
+            box("Bin lid",(x,1.89,.89),(.53,.58,.10),ink,.034)
+        box("Painted direction arrow",(.48,.22,.014),(.74,.23,.018),m["mint"],.006)
+    elif action == "market_end":
+        box("Roof access shed",(-3.62,1.02,.98),(1.71,1.61,1.93),m["brick"],.038)
+        box("Access door",(-3.62,.19,.88),(.70,.11,1.72),m["navy"],.018)
+        market_lettering("ROOF",(-3.62,.118,1.71),.11,cream)
+        box("Vent housing",(2.73,1.32,.31),(.96,.79,.62),m["concrete"],.063)
+        for i in range(4):
+            box("Vent louver",(2.73,.912,.17+i*.11),(.76,.045,.045),m["navy"],.009)
+        for x in (-2.75,2.95):
+            box("Parapet cap",(x,2.43,1.04),(5.29,.35,.084),m["concrete"],.019)
+
+
 def stage_market(action, frames):
     m = {
         "navy": material("Midnight blue",(.037,.046,.118)),
@@ -1191,14 +1306,19 @@ def stage_market(action, frames):
     else:
         shots[action](frames,m)
     market_neighborhood(action,frames,m)
+    enclosed = action in {"market_ticket","market_friend","market_mayor"}
+    if enclosed:
+        indoor_dressing(action,m)
+    else:
+        street_dressing(action,m)
     outside = action in {"market_street","market_win","market_count","market_blackout","market_hook","market_end"}
     is_day = action in {"market_street","market_win"}
     sky.inputs["Color"].default_value = (.31,.54,.88,1) if is_day else (.045,.085,.28,1)
     market_sky(is_day,outside)
-    light("AREA",(-3.1,-3.6,4.2),700 if is_day else 465,
+    light("AREA",(-3.1,-3.6,3.17 if enclosed else 4.2),700 if is_day else 465,
           (1,.84,.71) if is_day else (.55,.65,1),(0,.55,1.15),4.4)
-    light("AREA",(3.2,-1.55,3.7),420,(1,.73,.70) if outside else (1,.79,.56),(0,.53,1.2),3.5)
-    light("AREA",(0,2.15,4.8),635,(.57,.77,1) if outside else (.59,.78,1),(0,0,1.0),3.4)
+    light("AREA",(3.2,-1.55,3.05 if enclosed else 3.7),420,(1,.73,.70) if outside else (1,.79,.56),(0,.53,1.2),3.5)
+    light("AREA",(0,2.15,3.14 if enclosed else 4.8),635,(.57,.77,1) if outside else (.59,.78,1),(0,0,1.0),3.4)
     if action=="market_blackout":
         midpoint=frames//2
         for lamp in (obj.data for obj in scene.objects if obj.type=="LIGHT"):

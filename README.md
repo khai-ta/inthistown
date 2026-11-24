@@ -62,3 +62,17 @@ To mix a local copy of “Numbers” by TEMPOREX under the narration, run the fo
 ```sh
 .venv/bin/python mix_music.py output/the-door-with-my-name.mp4 "/path/to/Numbers.mp3" output/the-door-with-my-name-numbers.mp4
 ```
+
+## Render Everybody Bet Yes
+
+The Kalshi-town episode uses three [official Roblox avatar bodies](https://create.roblox.com/docs/avatar/resources) with different silhouettes and rigs. Its edit uses moving cameras, bent-joint animation, phone and fountain inserts, animated captions and original sound effects.
+
+```sh
+.venv/bin/python fetch_avatar.py --market
+.venv/bin/python make_video.py episodes/kalshi-town.json --provider elevenlabs --voice Adam --tempo 1.4 -o output/everybody-bet-yes-voice.mp4
+.venv/bin/python mix_music.py output/everybody-bet-yes-voice.mp4 "/path/to/TempoRex Instrumental.mp3" output/everybody-bet-yes.mp4 --music-gain .30
+```
+
+### Use avatars from a Studio project
+
+The renderer can work from official reference bodies without a live Studio session. To direct a cast inside Studio, install and open Roblox Studio and enable **Assistant → Manage MCP Servers → Enable Studio as MCP server**. Choose Codex CLI under **Quick connect** or use [Roblox's official Codex integration](https://github.com/Roblox/roblox-studio-agent-plugin). Restart the client and look for Studio's green connection indicator. In a connected place, Roblox Studio can insert a default R6 or R15 rig, your own avatar, or an avatar specified by username or user ID through Rig Builder. See [Studio MCP setup](https://create.roblox.com/docs/studio/mcp) and [Rig Builder](https://create.roblox.com/docs/studio/rig-builder).

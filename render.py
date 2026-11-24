@@ -188,7 +188,7 @@ def camera(start, finish, target, lens, frames):
         "twist": ((1.12, -1.86, 2.19), (1.21, .78, 2.12), 53, .68),
         "escape": ((.56, -4.15, 1.55), (-.11, -1.62, 1.31), 38, .58),
         "dusk": ((-2.10, -2.40, 2.15), (-.51, -.42, 1.86), 47, .44),
-        "streetdoor": ((.18, -1.68, 1.88), (0, .6, 1.52), 45, .68),
+        "streetdoor": ((.04, -3.44, 2.0), (0, .6, 1.52), 41, .68),
     }
     if shot["action"] not in inserts:
         return
@@ -354,6 +354,7 @@ def brass_key(pos, angle):
     ring.data.materials.append(yellow)
     piece(prop, "Key blade", (.135, 0, .026), (.16, .041, .038), amber, .008)
     piece(prop, "Key tooth", (.2, .026, .026), (.037, .069, .038), amber, .006)
+    return prop
 
 
 def hallway(action, frames):
@@ -441,7 +442,10 @@ def hallway(action, frames):
             for arm in double_arms:
                 arm.rotation_euler.x = -.8
             if action == "key":
-                brass_key((.47, 2.29, 1.42), 1.1)
+                box("Lock plate", (.924, 2.331, 1.42), (.14, .042, .19), ink, .018)
+                key_prop = brass_key((.758, 2.237, 1.43), .08)
+                keys(key_prop, "rotation_euler", [(1, (1.05, 0, .08)),
+                    (frames//2, (1.05, 0, .08)), (frames, (1.88, 0, .08))])
                 keys(kid_arms[1], "rotation_euler", [(1, (0, 0, 0)), (frames//2, (-.85, 0, 0))])
             if action == "escape":
                 keys(kid, "location", [(1, (-1.13, .15, 0)), (frames, (-.55, -2.4, 0))])
@@ -479,7 +483,7 @@ def hallway(action, frames):
         "open": ((.54, -.67, 1.86), (.63, -.35, 1.80), (.20, 2.31, 1.42), 44),
         "clock": ((-2.34, -.10, 2.07), (-2.17, .54, 1.75), (-2.17, 1.7, .92), 47),
         "twin": ((-.68, .03, 1.76), (-.43, .40, 1.88), (.12, 2.25, 1.67), 47),
-        "key": ((.83, .46, 1.58), (.70, .85, 1.50), (.47, 2.28, 1.43), 48),
+        "key": ((1.27, .72, 1.70), (1.19, 1.00, 1.66), (.86, 2.27, 1.43), 53),
         "escape": ((1.61, -3.33, 2.24), (1.04, -4.48, 2.46), (0, -.09, 1.50), 33),
         "twist": ((.56, -2.95, 2.05), (.32, -5.14, 2.41), (0, 1.91, 1.62), 32),
     }

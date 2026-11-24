@@ -82,6 +82,19 @@ class RecruitingSet(PartySet):
         b("Status card",(x,y+.103,z+.053),(1.18,.018,.23),status,.024)
         self.text(hero,x,y+.126,z+.055,.105,r.cream).rotation_euler.z=math.pi
         self.text(detail,x,y+.121,z-.161,.065,r.cream).rotation_euler.z=math.pi
+        if beat == "montage":
+            for index,(label,color) in enumerate((("APPLICATION SENT",r.teal),
+                                                 ("PROBLEM ACCEPTED",r.teal),
+                                                 ("INTERVIEW NOTES",m["navy"]))):
+                plate = r.group(label,(x,y+.143,z+.057))
+                r.piece(plate,"Montage status", (0,0,0),(1.24,.024,.24),color,.023)
+                text = r.market_lettering(label,(0,.019,0),.095,r.cream,plate)
+                text.rotation_euler.z=math.pi
+                start=max(1,self.time(index/3))
+                end=self.time((index+1)/3)
+                for frame,visible in ((1,False),(start,True),(end-1,True),(end,False)):
+                    plate.scale=(1,)*3 if visible else (.001,)*3
+                    plate.keyframe_insert(data_path="scale",frame=frame)
         if beat in {"resume","grind","prep"}:
             for index in range(3):
                 b("Entry guide",(x-.21+.09*index,y+.117,z-.27),(1.06-.18*index,.02,.018),m["window"],.004)
@@ -135,6 +148,8 @@ class RecruitingSet(PartySet):
             r.piece(phone,"Lit screen",(0,-.061,0),(.50,.022,.34),m["window"],.043)
             r.market_lettering("You coming out",(0,-.081,.061),.061,r.cream,phone)
             r.market_lettering("tonight?",(0,-.081,-.066),.073,r.cream,phone)
+            cover=r.piece(phone,"Unlit screen",(0,-.089,0),(.50,.014,.34),m["navy"],.034)
+            self.key(cover,"scale",[(0,(1,)*3),(.12,(1,)*3),(.15,(.001,)*3)])
 
     def work(self):
         self.bedroom()
@@ -150,10 +165,17 @@ class RecruitingSet(PartySet):
                         (1,(x,y+.18,z),(1.68,2.57,1.78),50),indoors=True)
             return
         actor=self.leo((-.61,.62,0),.16,beat in {"prep","waiting"})
-        self.motion(actor,[(0,(-.61,.62,0),(0,-.24),(0,.37),.02),
-                           (.34,(-.60,.57,0),(-.26,-.83),(.26,.39),.15),
-                           (.70,(-.60,.53,0),(-.55,-.27),(.40,.21),-.16),
-                           (1,(-.61,.62,0),(-.15,-.28),(.18,.25),.06)])
+        if beat == "morning":
+            self.motion(actor,[(0,(-.61,.62,0),(0,-.24),(0,.37),.02),
+                (.40,(-.86,-.31,0),(-.13,.26),(.19,.31),-.78),
+                (.58,(-1.49,-1.61,0),(-.53,-.54),(.32,.34),-2.41),
+                (.86,(-1.64,-1.72,0),(-.92,-.91),(.44,.46),-2.55),
+                (1,(-1.60,-1.68,0),(-.24,-.39),(.18,.22),-2.40)])
+        else:
+            self.motion(actor,[(0,(-.61,.62,0),(0,-.24),(0,.37),.02),
+                               (.34,(-.60,.57,0),(-.26,-.83),(.26,.39),.15),
+                               (.70,(-.60,.53,0),(-.55,-.27),(.40,.21),-.16),
+                               (1,(-.61,.62,0),(-.15,-.28),(.18,.25),.06)])
         if beat=="ending":
             self.camera((0,(-1.05,-1.55,1.48),(-.65,-.31,1.13),51),
                         (.51,(-.93,-1.42,1.45),(-.66,-.30,1.13),54),

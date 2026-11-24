@@ -10,7 +10,7 @@ SCREEN = {
     "profile": ("LinkedIn", "JOBS FOR YOU", "Search software internships"),
     "resume": ("APPLICATION", "UPLOAD RESUME", "Now enter your work history"),
     "submit": ("APPLICATION", "SUBMITTED", "Application count: 47"),
-    "reject": ("INBOX", "UPDATE", "We decided to move forward"),
+    "reject": ("INBOX", "UPDATE", "We chose other applicants"),
     "next": ("JOBS", "NEXT APPLICATION", "Application count: 48"),
     "grind": ("LeetCode", "REVERSE LINKED LIST", "1 -> 2 -> 3 -> NULL"),
     "failed": ("TEST CASE", "WRONG ANSWER", "Expected 3. Received 1."),
@@ -72,19 +72,19 @@ class RecruitingSet(PartySet):
         r,m,b=self.r,self.m,self.block
         x,y,z=.58,-.02,1.52
         b("Monitor shell",(x,y,z),(1.48,.14,.93),m["navy"],.06,solid=True)
-        b("Monitor screen",(x,y-.082,z),(1.34,.024,.79),m["fabric"],.027)
+        b("Monitor screen",(x,y+.082,z),(1.34,.024,.79),m["fabric"],.027)
         b("Monitor stand neck",(x,y,.98),(.15,.15,.29),m["navy"])
         b("Monitor stand foot",(x,y-.03,.862),(.51,.37,.046),m["navy"])
         title, hero, detail=SCREEN[beat]
         status = r.teal if beat in {"accepted","submit"} else r.red if beat in {"reject","failed"} else m["navy"]
-        b("Screen header",(x,y-.10,z+.305),(1.31,.018,.15),m["navy"],.012)
-        self.text(title,x,y-.12,z+.303,.090,r.cream)
-        b("Status card",(x,y-.103,z+.053),(1.18,.018,.23),status,.024)
-        self.text(hero,x,y-.126,z+.055,.105,r.cream)
-        self.text(detail,x,y-.121,z-.161,.065,r.cream)
+        b("Screen header",(x,y+.10,z+.305),(1.31,.018,.15),m["navy"],.012)
+        self.text(title,x,y+.12,z+.303,.090,r.cream).rotation_euler.z=math.pi
+        b("Status card",(x,y+.103,z+.053),(1.18,.018,.23),status,.024)
+        self.text(hero,x,y+.126,z+.055,.105,r.cream).rotation_euler.z=math.pi
+        self.text(detail,x,y+.121,z-.161,.065,r.cream).rotation_euler.z=math.pi
         if beat in {"resume","grind","prep"}:
             for index in range(3):
-                b("Entry guide",(x-.21+.09*index,y-.117,z-.27),(1.06-.18*index,.02,.018),m["window"],.004)
+                b("Entry guide",(x-.21+.09*index,y+.117,z-.27),(1.06-.18*index,.02,.018),m["window"],.004)
 
     def bedroom(self):
         r,m,b=self.r,self.m,self.block
@@ -92,10 +92,10 @@ class RecruitingSet(PartySet):
         b("Shared desk",(.32,.04,.76),(2.42,1.04,.15),r.brown,.045,solid=True)
         for x in (-.67,1.30):
             b("Desk leg",(x,.05,.36),(.13,.78,.71),r.ink)
-        b("Keyboard",(.27,-.29,.861),(.66,.22,.046),m["navy"],.013)
+        b("Keyboard",(.27,.31,.861),(.66,.22,.046),m["navy"],.013)
         for i in range(12):
-            b("Key",(-.005+.047*i,-.29,.895),(.032,.11,.017),m["walk"],.004)
-        b("Mouse",(.77,-.39,.888),(.15,.20,.089),m["navy"],.045)
+            b("Key",(-.005+.047*i,.31,.895),(.032,.11,.017),m["walk"],.004)
+        b("Mouse",(.77,.32,.888),(.15,.20,.089),m["navy"],.045)
         for index in range(3 if self.beat in {"night","reflect","uncertain"} else 1):
             self.cup("Coffee cup",(-.76+.117*index,.19+.10*(index%2),.932),r.cream)
             b("Coffee lid",(-.76+.117*index,.19+.10*(index%2),1.023),(.166,.166,.031),m["navy"],.019)
@@ -110,11 +110,23 @@ class RecruitingSet(PartySet):
             self.text("3  <-  2  <-  1",.98,3.395,1.83,.14,r.teal)
         if self.beat=="morning":
             r.light("AREA",(-1.95,-2.2,2.27),380,(1,.74,.47),(-.98,.16,1.05),1.6)
+            for side in (-1,1):
+                curtain=b("Morning curtain",(-1.94+side*.30,-2.435,1.78),(.64,.11,1.37),m["rose"],.046)
+                self.key(curtain,"location",[(0,(-1.94+side*.30,-2.435,1.78)),
+                    (.42,(-1.94+side*.30,-2.435,1.78)),(.82,(-1.94+side*.84,-2.435,1.78))])
         if self.beat in {"mirror_first","mirror_second","mirror_third"}:
             b("Mirror",(1.89,3.47,1.72),(1.24,.07,1.38),m["window"])
             for side in (-1,1):
                 b("Mirror frame",(1.89+side*.63,3.42,1.72),(.065,.10,1.40),r.brown)
             self.text("INTERVIEW PRACTICE",-1.12,3.46,2.27,.14,r.cream)
+        elif self.beat == "waiting":
+            b("Laptop keyboard",(.41,.19,.862),(.82,.57,.076),m["navy"],.04)
+            lid=r.group("Laptop hinge",(.41,-.06,.905))
+            r.piece(lid,"Laptop lid",(0,0,.26),(.82,.07,.53),m["navy"],.042)
+            r.piece(lid,"Laptop display",(0,.044,.26),(.73,.013,.45),m["window"],.023)
+            end=r.market_lettering("CALL ENDED",(0,.056,.26),.077,r.cream,lid)
+            end.rotation_euler.z=math.pi
+            self.key(lid,"rotation_euler",[(0,(0,0,0)),(.53,(0,0,0)),(.82,(-1.48,0,0)),(1,(-1.48,0,0))])
         else:
             self.screen(self.beat if self.beat in SCREEN else "night")
         if self.beat=="ending":
@@ -145,16 +157,21 @@ class RecruitingSet(PartySet):
         if beat=="ending":
             self.camera((0,(-1.05,-1.55,1.48),(-.65,-.31,1.13),51),
                         (.51,(-.93,-1.42,1.45),(-.66,-.30,1.13),54),
-                        (.53,(.34,-1.93,1.81),(.59,-.03,1.53),45),
-                        (1,(.29,-1.80,1.75),(.59,-.03,1.54),49),indoors=True)
-        elif beat in {"desk","night","reflect","morning","waiting"}:
+                        (.53,(1.34,1.75,1.83),(.59,-.03,1.53),45),
+                        (1,(1.17,1.60,1.78),(.59,-.03,1.54),49),indoors=True)
+        elif beat == "morning":
+            self.camera((0,(-2.60,-2.11,2.39),(-.58,.49,1.39),35),
+                        (.41,(-2.22,-1.76,2.18),(-.61,.54,1.51),39),
+                        (.43,(.12,-.78,2.06),(-1.88,-2.45,1.81),36),
+                        (1,(-.10,-1.12,1.93),(-1.91,-2.42,1.80),43),indoors=True)
+        elif beat in {"desk","night","reflect","waiting"}:
             self.camera((0,(-2.60,-2.11,2.39),(-.58,.49,1.39),35),
                         (1,(-2.22,-1.76,2.18),(-.61,.54,1.51),39),indoors=True)
         else:
             self.camera((0,(-2.11,-2.12,2.03),(-.19,.22,1.54),36),
                         (.37,(-1.90,-1.91,1.98),(-.11,.22,1.53),38),
-                        (.39,(.47,-1.76,1.75),(.59,-.03,1.54),44),
-                        (1,(.45,-1.43,1.67),(.59,-.03,1.54),53 if beat=="failed" else 47),indoors=True)
+                        (.39,(1.27,1.72,1.78),(.59,-.03,1.54),44),
+                        (1,(1.12,1.41,1.69),(.59,-.03,1.54),53 if beat=="failed" else 47),indoors=True)
 
 
 def stage_recruiting(renderer, action, frames):

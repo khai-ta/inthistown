@@ -264,6 +264,15 @@ def roblox_actor(name, pos, shirt, hair, yaw, adult, costume=None):
         piece(rig,"Jacket zipper",(0,-.229,1.32),(.045,.021,.46),ink,.012)
         for x in (-.158,.158):
             piece(rig,"Jacket pocket",(x,-.226,1.17),(.13,.035,.12),brown,.014)
+    if shot["action"] in {"recruit_grind","recruit_failed","recruit_accepted"}:
+        band = piece(face,"Headphone band",(0,.045,2.264),(.55,.19,.07),ink,.025)
+        phones = [band]
+        for side in (-1,1):
+            phones.append(piece(face,"Headphone ear cup",(side*.266,.019,1.996),(.10,.25,.25),ink,.049))
+        if shot["action"] == "recruit_grind":
+            for obj in phones:
+                start=obj.location.copy()
+                keys(obj,"location",[(1,start+Vector((0,0,.31))),(int(frames*.23),start),(frames,start)])
     if shot["action"] in MARKET_ACTIONS | PARTY_ACTIONS | RECRUIT_ACTIONS:
         expressive_face(face, costume)
     bpy.context.view_layer.update()

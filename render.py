@@ -647,6 +647,9 @@ def market_camera(frames, moves):
     scene.camera = cam
     previous = 0
     for t, pos, point, focal in moves:
+        if shot["action"] in {"market_ticket","market_friend","market_mayor"}:
+            if not (-4.13 < pos[0] < 4.13 and -5.93 < pos[1] < 2.25 and .28 < pos[2] < 3.31):
+                raise ValueError(f"Interior camera key outside room: {pos}")
         frame = max(previous + 1, round(1 + (frames - 1) * t))
         previous = frame
         cam.location = pos
@@ -706,15 +709,7 @@ def market_phone(pos, navy, glow, title, detail):
 
 
 def market_school(frames, m):
-    box("Grass", (0, 1, -.16), (20, 17, .30), m["grass"])
-    box("Walkway", (0, .23, .004), (2.1, 3.21, .03), m["concrete"])
-    box("School", (0, 3.2, 2.3), (9.4, 2.7, 4.6), m["brick"])
-    box("Entry", (0, 1.80, 1.20), (1.8, .12, 2.39), m["navy"])
-    box("Canopy", (0, 1.46, 2.57), (2.68, .91, .18), cream)
-    for x in (-3.3, -2.2, 2.2, 3.3):
-        for z in (1.48, 3.0):
-            box("Classroom window", (x, 1.8, z), (.81, .10, .83), m["glass"])
-    market_lettering("SCHOOL", (0, 1.78, 3.38), .42, cream)
+    box("School path",(0,.45,.028),(2.06,3.75,.046),m["concrete"],.014)
     board = group("Snow day sign", (1.88, -.64, 1.07))
     piece(board, "Stake", (0, 0, -.47), (.12, .14, 1.2), brown)
     piece(board, "Sign", (0, 0, .21), (1.44, .14, .89), m["navy"])
@@ -734,8 +729,8 @@ def market_school(frames, m):
     for i in range(14):
         dot = box("Snow flurry", ((i*13%37)/7-2.4, .6+(i%3)*.35, 2.4), (.034, .035, .043), cream, .006)
         keys(dot, "location", [(1, dot.location.copy()), (frames, (dot.location.x+.2, dot.location.y, .05+i*.15))])
-    market_camera(frames, [(0,(9.55,-16.8,10.4),(-.68,-.94,1.21),33),
-                            (.29,(6.22,-13.71,7.55),(-.15,-.31,1.25),36),
+    market_camera(frames, [(0,(7.7,-12.8,5.65),(8.4,.74,1.4),34),
+                            (.29,(4.8,-9.1,4.43),(6.0,.65,1.5),36),
                             (.30,(-3.43,-6.5,3.65),(0,.7,1.26),37),
                             (.42,(-3.05,-5.88,3.21),(0,.70,1.25),37),
                             (.43,(3.65,-4.80,2.0),(1.18,-.28,1.20),44),
@@ -743,7 +738,7 @@ def market_school(frames, m):
 
 
 def market_fountain(frames, m):
-    box("Park pavers", (0, .6, -.14), (16, 15, .27), m["concrete"])
+    box("Fountain court", (0, .78, .021), (5.3,4.0,.044), m["concrete"],.13)
     for x in (-4.1,-2.8,2.95,4.15):
         box("Tree trunks", (x,2.8,.88), (.25,.25,1.76), brown)
         box("Tree canopy", (x,2.8,2.07), (1.35,1.25,1.42), m["grass"], .20)
@@ -788,10 +783,13 @@ def market_fountain(frames, m):
 
 
 def market_room(m, floor, wall):
-    box("Interior floor", (0, .34, -.14), (12, 12, .27), floor)
-    box("Back wall", (0, 2.53, 2.22), (11, .20, 4.5), wall)
-    box("Side wall", (-4.4, .35, 2.22), (.19, 4.5, 4.5), wall)
-    box("Back trim", (0, 2.41, .12), (10.8, .11, .22), cream)
+    box("Interior floor",(0,-1.84,-.14),(9.04,9.08,.28),floor)
+    box("Back wall",(0,2.53,1.77),(9.04,.19,3.56),wall)
+    box("Front wall",(0,-6.26,1.77),(9.04,.19,3.56),wall)
+    for x in (-4.44,4.44):
+        box("Side wall",(x,-1.86,1.77),(.19,8.80,3.56),wall)
+    box("Room ceiling",(0,-1.85,3.57),(9.04,8.98,.17),cream,.006)
+    box("Back trim",(0,2.41,.12),(8.75,.11,.22),cream)
 
 
 def market_bedroom(frames,m):
@@ -865,32 +863,11 @@ def market_office(frames,m):
     market_character_motion(milo,frames,[(0,(2.18,-.19,0),(0,0),(0,0),0),(.47,(1.57,-.36,0),(-.31,0),(.3,0),-.12),
                                          (1,(1.47,-.34,0),(-.49,0),(.32,0),-.18)])
     market_camera(frames,[(0,(3.8,-4.31,2.73),(.22,.65,1.44),38),(.46,(3.25,-3.48,2.40),(.18,.52,1.37),43),
-                          (.47,(.38,-.36,3.63),(.07,-.03,1.13),42),(.73,(.40,-.29,3.12),(.28,-.12,1.19),51),
+                          (.47,(.38,-.36,3.21),(.07,-.03,1.13),38),(.73,(.40,-.29,2.99),(.28,-.12,1.19),47),
                           (.74,(2.74,-2.24,2.2),(1.47,-.32,1.83),43),(1,(2.49,-1.92,2.11),(1.49,-.32,1.86),47)])
 
 
-def market_side_street(m):
-    box("Street",(0,0,-.17),(17,15,.29),m["navy"])
-    for side in (-1,1):
-        box("Pavement",(side*4.70,2.48,.02),(6.6,3.1,.12),m["concrete"])
-    box("Cross street",(0,5.41,-.014),(2.68,8.3,.04),m["navy"],.008)
-    for y in (3.3,4.6,5.9,7.2,8.5):
-        box("Cross street center line",(0,y,.013),(.07,.59,.014),yellow,.004)
-    for i in range(5):
-        box("Side street crosswalk",((i-2)*.43,2.39,.024),(.23,.44,.015),cream,.004)
-    for x in (-4.8,-2.35,2.35,4.8):
-        box("Shop wall",(x,4.41,1.72),(2.3,1.9,3.43),m["brick"] if x > 0 else m["violet"])
-        box("Window",(x,3.43,1.85),(1.52,.07,.95),m["glass"])
-        box("Awning",(x,3.28,2.48),(2.17,.56,.18),m["pink"])
-    for x in (-3.18,3.13):
-        box("Lamp pole",(x,1.18,1.51),(.12,.12,3),ink)
-        box("Streetlight glass",(x,1.18,3.03),(.3,.33,.18),m["mint"])
-    for x in range(-6,7):
-        box("Road dash",(x*1.2,-1.76,.015),(.61,.10,.014),yellow,.004)
-
-
 def market_raffle(frames,m):
-    market_side_street(m)
     box("Raffle counter",(0,.79,.51),(2.33,.8,1.02),brown)
     box("Countertop",(0,.79,1.06),(2.44,.89,.14),cream)
     box("Raffle sign",(0,.34,1.43),(1.55,.11,.43),m["navy"])
@@ -938,9 +915,8 @@ def market_booth(frames,m):
 
 
 def market_crossing(action,frames,m):
-    market_side_street(m)
     for x in range(-3,4):
-        box("Crosswalk",(.55*x,.38,.019),(.33,2.2,.022),cream,.006)
+        box("Crosswalk",(.46*x,-.39,.036),(.25,2.85,.015),cream,.006)
     milo = market_actor("milo",(-.9,-.12,0),.48)
     jules = market_actor("jules",(1.0,.27,0),-.61)
     if action=="market_blackout":
@@ -980,11 +956,6 @@ def market_crossing(action,frames,m):
 def market_rooftop(frames,m):
     box("Roof",(0,.63,-.15),(11,8,.30),m["concrete"])
     box("Parapet",(0,2.43,.51),(11,.27,1.02),m["brick"])
-    for index,x in enumerate((-6,-3.7,-1.9,.3,2.7,5.1,7.1)):
-        high = (index*7%5)*.59+2.2
-        box("Distant building",(x,6,-1.6+high/2),(1.9,2.04,high),m["navy"] if index%2 else m["violet"])
-        for z in (.45,1.08):
-            box("Lit windows",(x,4.96,z-.71),(1.14,.07,.22),m["glass"])
     phone=market_phone((.46,-.19,1.47),m["navy"],m["violet"],"WILL KHAI TELL?","OPEN")
     recording=market_lettering("REC",(0,-.091,.33),.101,m["pink"],phone)
     settlement=market_lettering("SETTLED YES",(0,-.100,-.13),.129,m["mint"],phone)
@@ -1086,111 +1057,122 @@ def market_crowd(entries, frames):
         market_character_motion(person,frames,poses)
 
 
-def school_town_grid(frames, paints, m):
-    asphalt = material("Residential asphalt", (.090,.110,.127))
-    edge = material("Curbs and sidewalks", (.52,.51,.48))
-    x_roads = (-6.24, 6.24)
-    y_roads = (-9.6, -3.05, 6.73)
-    for x in x_roads:
-        box("North-south street", (x,-3.1,-.026),(2.85,28.1,.048),asphalt,.005)
-        for y in range(-14,11):
-            if all(abs(y-road) > 2.05 for road in y_roads):
-                box("North-south center dash",(x,y,.010),(.065,.52,.016),yellow,.004)
-        for side in (-1,1):
-            for y,length in ((-6.32,3.52),(1.87,6.75),(9.43,2.22)):
-                box("Curb sidewalk",(x+side*1.70,y,.016),(.52,length,.09),edge,.016)
-    for y in y_roads:
-        box("East-west street",(0,y,-.018),(34,2.93,.055),asphalt,.005)
-        for x in range(-15,16):
-            if all(abs(x-road)>1.95 for road in x_roads):
-                box("East-west center dash",(x,y,.020),(.50,.065,.014),yellow,.004)
-        for side in (-1,1):
-            for x,length in ((-11.25,6.65),(0,9.10),(11.22,6.65)):
-                box("Raised sidewalk",(x,y+side*1.73,.017),(length,.52,.093),edge,.017)
-    for x in x_roads:
-        for side in (-1,1):
-            for i in range(6):
-                box("Painted crosswalk",(x+(i-2.5)*.40,-3.05+side*1.78,.030),
-                    (.23,.47,.012),cream,.005)
-            box("Stop line",(x,-3.05+side*2.20,.028),(2.2,.07,.015),cream,.004)
-    for row, y in enumerate((-6.25, -.32, 3.39, 9.6)):
-        columns = (-12.0,-9.07,-3.4,.05,3.34,9.05,12.04) if row in {0,3} else (-12,-9.08,9.04,12.0)
-        for i,x in enumerate(columns):
-            town_house(x,y,0,2.20+.19*(i%2),paints[(i+row*2)%len(paints)],m)
-            tree_x = x + (.87 if i%2 else -.89)
-            town_tree(tree_x,y-1.22,.71+.09*(i%3),m)
-            box("Driveway",(x+.76,y-1.66,.005),(.71,1.12,.033),edge,.013)
-    for x,y in ((-4.42,-4.85),(-8.00,-4.77),(4.44,-4.85),(8.02,-4.85),
-                (-4.45,4.55),(8.02,4.6),(4.45,4.60)):
-        town_lamp(x,y,m)
-    for x in (-2.18,2.15):
-        for i in range(5):
-            box("School fence post",(x+(.38*i if x>0 else -.38*i),-.63,.33),
-                (.09,.12,.65),cream,.009)
-        box("School fence rail",(x+(.76 if x>0 else -.76),-.62,.49),(1.63,.07,.093),cream,.008)
+# The set origins are in town coordinates. Each scene moves the shared model
+# into the existing local blocking and camera coordinates.
+TOWN_SITES = {
+    "market_street": (-11.4,0,0),
+    "market_win": (-4.0,.6,0),
+    "market_count": (5.8,0,0),
+    "market_trade": (10.8,1.04,0),
+    "market_blackout": (5.8,-2.39,0),
+    "market_hook": (5.8,-2.39,0),
+    "market_end": (13.8,1.19,4.38),
+}
 
-    traffic = [
-        ((-12.2,-3.69,0),(12.5,-3.69,0),1.571,m["glass"]),
-        ((11.4,-2.39,0),(-11.8,-2.39,0),-1.571,m["brick"]),
-        ((-6.86,-14.2,0),(-6.86,-4.95,0),3.142,m["sand"]),
-        ((6.86,10.3,0),(6.86,-.77,0),0,m["mint"]),
-        ((9.8,6.14,0),(-10.4,6.14,0),-1.571,m["violet"]),
-    ]
-    for start,end,heading,paint in traffic:
-        car = town_car(start[0],start[1],heading,paint,m)
-        keys(car,"location",[(1,start),(frames,end)])
+
+def street_strip(name, points, width, height, surface):
+    left = []
+    right = []
+    for index, point in enumerate(points):
+        direction = Vector(points[min(index+1,len(points)-1)]) - Vector(points[max(0,index-1)])
+        direction.normalize()
+        normal = Vector((-direction.y,direction.x)) * (width/2)
+        left.append((point[0]+normal.x,point[1]+normal.y,height))
+        right.append((point[0]-normal.x,point[1]-normal.y,height))
+    count = len(points)
+    faces = [(i,i+1,count+i+1,count+i) for i in range(count-1)]
+    mesh = bpy.data.meshes.new(name)
+    mesh.from_pydata(left+right,[],faces)
+    mesh.update()
+    obj = bpy.data.objects.new(name,mesh)
+    bpy.context.collection.objects.link(obj)
+    obj.data.materials.append(surface)
+
+
+def town_facade(x,y,width,height,wall,m,label):
+    box(label+" building",(x,y,height/2),(width,3.4,height),wall,.06)
+    box(label+" white fascia",(x,y-1.66,height-.23),(width+.13,.17,.22),cream,.02)
+    box(label+" front door",(x,y-1.72,1.01),(.90,.11,2.03),m["navy"],.025)
+    for side in (-1,1):
+        for z in (1.39,2.88):
+            wx=x+side*width*.29
+            box(label+" trim",(wx,y-1.73,z),(1.03,.12,.85),cream,.018)
+            box(label+" window",(wx,y-1.805,z),(.86,.025,.70),m["glass"],.006)
+            box(label+" mullion",(wx,y-1.828,z),(.047,.029,.68),cream,.006)
+    market_lettering(label,(x,y-1.83,height-.57),.24,cream)
+
+
+def shared_market_town(action,frames,m):
+    site=TOWN_SITES[action]
+    previous=set(scene.objects)
+    asphalt=material("Main Street asphalt",(.11,.14,.19))
+    sidewalk=material("Warm street concrete",(.57,.56,.51))
+    grass=material("Mown green lawns",(.14,.41,.22))
+    paints=(m["glass"],m["sand"],m["brick"],m["mint"],m["violet"])
+    box("Town terrain",(0,3,-.27),(88,74,.48),grass,.02)
+    main=[(-28,1.65),(-23,-.21),(-18,-2.42),(-14,-2.84),(13.7,-2.84),(19,-2.12),(25,.52),(29,1.52)]
+    north=[(5.8,-3),(5.8,.3),(5.88,5.8),(7.45,9.2),(11.2,10.6),(17.4,10.6)]
+    south=[(-9.0,-2.9),(-9.0,-6.9),(-8.7,-11.4),(-6.71,-15.3)]
+    for name, route in (("Main Street",main),("Maple Lane",north),("School Lane",south)):
+        street_strip(name+" sidewalk",route,5.32,.004,sidewalk)
+        street_strip(name,route,4.03,.014,asphalt)
+    for x in range(-17,19):
+        if min(abs(x-5.8),abs(x+9))>2.6:
+            box("Painted road dash",(x,-2.84,.028),(.48,.074,.013),yellow,.004)
+    for x in (-9,5.8):
+        for index in range(7):
+            box("Main Street crosswalk",(x+(index-3)*.36,-.81,.033),(.22,.60,.010),cream,.004)
+    for i,(x,y) in enumerate(((-20,3),(-16,4),(-7.6,6.9),(-4.2,6.9),(-.8,6.3),(2.2,7.1),
+                               (9.8,7.25),(13,7.1),(16.6,7.3),(19.9,6.2),
+                               (-17.8,-8),(-13.5,-8),(-5.9,-8),(-2.7,-8),(.7,-8),
+                               (4.1,-8),(8.2,-8),(12.0,-8),(16.1,-7.3),(20,-6.3))):
+        town_house(x,y,0,2.48+.26*(i%3),paints[i%len(paints)],m)
+        town_tree(x+(.94 if i%2 else -.94),y-1.52,.83+.10*(i%3),m)
+        if i%2==0:
+            for j in range(4):
+                box("Yard fence slat",(x-.85+j*.28,y-1.73,.36),(.083,.09,.68),cream,.012)
+            box("Yard fence rail",(x-.43,y-1.73,.45),(1.04,.065,.085),cream,.01)
+    town_facade(8.95,3.18,4.26,4.11,m["brick"],m,"DINER")
+    town_facade(13.8,3.01,4.47,4.38,m["sand"],m,"TOWN HALL")
+    town_facade(-11.4,3.55,7.73,4.45,m["brick"],m,"SCHOOL")
+    town_facade(-16.03,11.5,3.82,4.57,m["sand"],m,"LIBRARY")
+    for x in (-19.7,-15.3,-11.3,-6.9,-3.4,.70,3.9,8.5,13.1,17.4,21):
+        town_lamp(x,-.20,m)
+        if x not in {-11.3,-6.9,.70,8.5,13.1}:
+            town_tree(x+.58,.66,.74,m)
+    for x,y in ((-13.3,-.1),(-5.9,1.69),(-2.35,1.69),(3.08,.35)):
+        town_bench(x,y,m)
+    for index,(x,y,direction,paint) in enumerate([
+        (-18.7,-3.48,1.57,m["glass"]),(15.1,-2.19,-1.57,m["brick"]),
+        (5.25,6.1,0,m["mint"]),(-9.54,-12.4,3.1416,m["sand"])
+    ]):
+        car=town_car(x,y,direction,paint,m)
+        dx,dy=((1,0),(-1,0),(0,-1),(0,1))[index]
+        keys(car,"location",[(1,(x,y,0)),(frames,(x+dx*12.8,y+dy*7.8,0))])
+    for x,y,hue in ((-15.7,-.67,m["sand"]),(-7.3,-4.64,m["brick"]),(2.6,-4.61,m["glass"]),
+                      (10.72,-4.66,m["mint"]),(16.99,-.74,m["violet"])):
+        town_car(x,y,1.57,hue,m)
+    root=group("Shared town layout",(0,0,0))
+    for obj in set(scene.objects)-previous-{root}:
+        if obj.parent is None:
+            obj.parent=root
+    root.location=tuple(-axis for axis in site)
 
 
 def market_neighborhood(action,frames,m):
-    paints = (m["brick"],m["glass"],m["sand"],m["mint"],m["violet"])
-    if action in {"market_street","market_win"}:
-        box("Town ground", (0,6,-.27), (72,72,.43), m["grass"])
-        if action == "market_street":
-            school_town_grid(frames,paints,m)
-        else:
-            for i,x in enumerate((-8.2,-5.75,5.55,8.02)):
-                town_house(x,5.9+(i%2)*.54,0,2.23,paints[i],m)
-        for x,y,s in ((-4.4,1.28,1.15),(4.2,1.92,1.12),(-5.9,3.8,1),(5.3,3.8,1.04)):
-            town_tree(x,y,s,m)
-        for x in (-4.3,4.33):
-            town_lamp(x,.87,m)
-        if action == "market_street":
-            box("Parking bay",(3.62,.37,-.008),(1.25,2.26,.037),m["concrete"],.012)
-            town_car(3.62,.37,0,m["brick"],m)
-        else:
-            town_car(3.85,-.92,.44,m["brick"],m)
-        town_bench(-3.29,.9,m)
-        if action == "market_street":
-            entries=[(-2.82,1.29,.48,"walk"),(3.25,1.28,-.37,"talk"),
-                     (-3.28,-.51,.39,"walk"),(3.9,1.48,-.52,"talk"),
-                     (8.34,-4.81,.62,"walk"),(-8.3,-1.29,-.48,"walk"),
-                     (-2.42,-7.79,-.32,"walk"),(2.17,-7.74,.42,"talk")]
-        else:
-            entries=[(-2.97,1.07,.54,"react"),(2.21,1.19,-.55,"react"),
-                     (1.61,2.1,-.34,"react"),(.16,2.67,.12,"talk"),(-3.45,.25,.94,"walk")]
-        market_crowd(entries,frames)
+    if action in TOWN_SITES:
+        shared_market_town(action,frames,m)
+    if action == "market_street":
+        market_crowd([(-2.76,.75,.48,"walk"),(3.24,.87,-.37,"talk"),
+                      (-3.68,-.05,.39,"walk"),(4.1,.6,-.52,"talk"),
+                      (-7.62,-3.77,.39,"walk"),(5.61,-2.35,.3,"walk")],frames)
+    elif action == "market_win":
+        market_crowd([(-2.97,1.07,.54,"react"),(2.21,1.19,-.55,"react"),
+                      (1.61,2.1,-.34,"react"),(.16,2.67,.12,"talk"),(-3.45,.25,.94,"walk")],frames)
     elif action in {"market_count","market_blackout","market_hook"}:
-        for i,x in enumerate((-8.3,-5.7,-3.23,3.01,5.39,7.97)):
-            town_house(x,7.5+(i%2)*.52,0,2.30,paints[i%5],m)
-        for x in (-4.65,4.78):
-            town_tree(x,2.03,1.08,m)
-        town_car(3.88,-.96,-.17,m["brick"],m)
-        town_car(-4.06,1.18,.18,m["sand"],m)
-        town_bench(3.09,2.48,m)
-        if action == "market_count":
-            passer = town_car(-6.9,1.23,1.5708,m["glass"],m)
-            keys(passer,"location",[(1,(-6.9,1.23,0)),(int(frames*.66),(5.9,1.23,0)),(frames,(7.6,1.23,0))])
-        entries=[(-2.4,2.08,.24,"talk"),(2.31,2.19,-.42,"react"),
-                 (3.25,3.11,-.48,"walk"),(-3.24,2.77,.41,"walk"),
-                 (.29,3.27,-.12,"react")]
-        market_crowd(entries,frames)
-    elif action == "market_end":
-        for i,x in enumerate((-9,-6,-3,0,3,6,9)):
-            town_house(x,9.4+(i%3)*.58,-2.3,2.66,paints[i%5],m)
-        for i,x in enumerate((-7.55,-4.3,2.38,6.9)):
-            town_house(x,12.5,-2.1,2.54,paints[(i+2)%5],m)
-        town_lamp(-3.1,1.7,m)
-        town_lamp(3.9,1.7,m)
+        market_crowd([(-2.43,2.11,.25,"talk"),(2.31,1.97,-.44,"react"),
+                      (3.24,2.97,-.48,"walk"),(-3.18,2.76,.41,"walk"),
+                      (.30,3.27,-.12,"react")],frames)
     elif action == "market_friend":
         for x in (-3.6,3.02):
             box("Table placemat",(x,1.31,.93),(.54,.39,.022),m["pink"],.012)
@@ -1272,8 +1254,6 @@ def canister(name, x, y, z, radius, depth, mat):
 
 
 def indoor_dressing(action, m):
-    box("Finished ceiling",(0,-.43,3.57),(9,6,.16),cream,.018)
-    box("Right wall",(4.42,-.41,1.75),(.18,6.1,3.5),m["sand"] if action=="market_mayor" else m["violet"])
     box("Crown molding",(0,2.38,3.39),(8.8,.16,.13),cream,.021)
     for x in (-2.88,0,2.88):
         box("Ceiling beam",(x,-.39,3.43),(.12,5.8,.12),m["concrete"],.021)
@@ -1369,10 +1349,10 @@ def street_dressing(action,m):
 def stage_market(action, frames):
     m = {
         "navy": material("Midnight blue",(.037,.046,.118)),
-        "violet": material("Purple",(.27,.11,.47)),
+        "violet": material("Purple",(.31,.24,.45)),
         "pink": material("Pink vinyl",(.78,.13,.33)),
         "brick": material("Burnt brick",(.52,.18,.106)),
-        "grass": material("Green",(.105,.31,.22)),
+        "grass": material("Green",(.14,.36,.21)),
         "glass": material("Blue glass",(.23,.56,.86)),
         "concrete": material("Pavement",(.39,.42,.5)),
         "mint": material("Mint",(.1,.85,.48)),

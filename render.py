@@ -705,7 +705,7 @@ def market_phone(pos, navy, glow, title, detail):
 
 def market_school(frames, m):
     box("Grass", (0, 1, -.16), (20, 17, .30), m["grass"])
-    box("Walkway", (0, -.58, .004), (3.0, 9.4, .03), m["concrete"])
+    box("Walkway", (0, .23, .004), (2.1, 3.21, .03), m["concrete"])
     box("School", (0, 3.2, 2.3), (9.4, 2.7, 4.6), m["brick"])
     box("Entry", (0, 1.80, 1.20), (1.8, .12, 2.39), m["navy"])
     box("Canopy", (0, 1.46, 2.57), (2.68, .91, .18), cream)

@@ -658,6 +658,13 @@ def market_camera(frames, moves):
         cam.data.keyframe_insert(data_path="lens", frame=frame)
         cam.keyframe_insert(data_path="location", frame=frame)
         cam.keyframe_insert(data_path="rotation_euler", frame=frame)
+    if shot["action"] in {"market_ticket","market_friend","market_mayor"}:
+        for frame in range(1,frames+1):
+            scene.frame_set(frame)
+            x,y,z=cam.location
+            if not (-4.13 < x < 4.13 and -5.93 < y < 2.25 and .28 < z < 3.31):
+                raise ValueError(f"Interior camera clipping risk at frame {frame}: {(x,y,z)}")
+        scene.frame_set(1)
 
 
 def market_actor(role, position, yaw=0):
@@ -978,8 +985,8 @@ def market_rooftop(frames,m):
                           (.73,(.68,-1.82,1.78),(.46,-.19,1.46),53),(1,(.65,-1.61,1.74),(.46,-.19,1.46),55)])
 
 
-def town_house(x, y, base, width, paint, m):
-    height = 2.89 + width*.13
+def town_house(x, y, base, width, paint, m, second_story=False):
+    height = 2.89 + width*.13 + (1.26 if second_story else 0)
     depth = 2.2
     box("Siding", (x,y,base+height/2), (width,depth,height), paint)
     for direction in (-1, 1):
@@ -994,6 +1001,12 @@ def town_house(x, y, base, width, paint, m):
         box("White window trim", (window_x,front-.038,base+1.79), (.65,.10,.76), cream,.018)
         box("Window glass", (window_x,front-.096,base+1.79), (.51,.019,.62), m["glass"],.009)
         box("Window sash", (window_x,front-.111,base+1.79), (.035,.024,.61), cream,.004)
+    if second_story:
+        box("Second-floor trim",(x,front-.08,base+2.46),(width+.045,.16,.095),cream,.014)
+        for direction in (-1,0,1):
+            sx=x+direction*width*.28
+            box("Upper window trim",(sx,front-.046,base+3.45),(.51,.10,.69),cream,.015)
+            box("Upper window",(sx,front-.105,base+3.45),(.39,.017,.57),m["glass"],.009)
     box("Chimney", (x+width*.30,y+.22,base+height+.58), (.29,.32,.61), m["brick"],.012)
 
 
@@ -1066,7 +1079,7 @@ TOWN_SITES = {
     "market_trade": (10.8,1.04,0),
     "market_blackout": (5.8,-2.39,0),
     "market_hook": (5.8,-2.39,0),
-    "market_end": (13.8,1.19,4.38),
+    "market_end": (13.8,1.19,4.42),
 }
 
 
@@ -1080,7 +1093,7 @@ def street_strip(name, points, width, height, surface):
         left.append((point[0]+normal.x,point[1]+normal.y,height))
         right.append((point[0]-normal.x,point[1]-normal.y,height))
     count = len(points)
-    faces = [(i,i+1,count+i+1,count+i) for i in range(count-1)]
+    faces = [(i,count+i,count+i+1,i+1) for i in range(count-1)]
     mesh = bpy.data.meshes.new(name)
     mesh.from_pydata(left+right,[],faces)
     mesh.update()
@@ -1126,7 +1139,7 @@ def shared_market_town(action,frames,m):
                                (9.8,7.25),(13,7.1),(16.6,7.3),(19.9,6.2),
                                (-17.8,-8),(-13.5,-8),(-5.9,-8),(-2.7,-8),(.7,-8),
                                (4.1,-8),(8.2,-8),(12.0,-8),(16.1,-7.3),(20,-6.3))):
-        town_house(x,y,0,2.48+.26*(i%3),paints[i%len(paints)],m)
+        town_house(x,y,0,2.48+.26*(i%3),paints[i%len(paints)],m,second_story=i%3==1)
         town_tree(x+(.94 if i%2 else -.94),y-1.52,.83+.10*(i%3),m)
         if i%2==0:
             for j in range(4):
@@ -1224,7 +1237,9 @@ def market_sky(is_day, outdoors):
                                  (1.36-.10*(i%3),.8,.48+.11*(i%2))))
     else:
         ellipses.append(((3.15,16.9,7.8),(.54,.54,.54)))
+    site=TOWN_SITES.get(shot["action"],(0,0,0))
     for pos, size in ellipses:
+        pos=tuple(axis-origin for axis,origin in zip(pos,site))
         bpy.ops.mesh.primitive_uv_sphere_add(segments=16,ring_count=8,location=pos)
         puff = bpy.context.object
         puff.scale = size

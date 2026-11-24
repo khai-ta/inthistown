@@ -886,7 +886,7 @@ def market_raffle(frames,m):
     box("Raffle counter",(0,.79,.51),(2.33,.8,1.02),brown)
     box("Countertop",(0,.79,1.06),(2.44,.89,.14),cream)
     box("Raffle sign",(0,.34,1.43),(1.55,.11,.43),m["navy"])
-    market_lettering("RAFFLE", (0,.271,1.44),.21,cream)
+    market_lettering("RAFFLE $5", (0,.271,1.44),.18,cream)
     for index in range(7):
         ticket=box("Ticket",(-.92+index*.29,.59,1.15),(.21,.27,.027),m["pink"],.01)
         ticket.rotation_euler.z = .29 * (-1)**index
@@ -947,6 +947,21 @@ def market_crossing(action,frames,m):
                                               (.58,(.30,.09,0),(-.62,0),(.55,0),.32),(1,(.28,.07,0),(-.25,-.3),(.19,.23),.31)])
         market_character_motion(milo,frames,[(0,(-.50,-.11,0),(0,-.33),(0,.21),.12),(.38,(-.50,-.11,0),(0,-.25),(0,.20),.56),
                                              (1,(-.52,-.13,0),(-.18,-.37),(.24,.31),.42)])
+        result = group("Settlement board",(0,1.74,2.57))
+        piece(result,"Scoreboard",(0,0,0),(1.78,.17,.52),m["navy"],.042)
+        market_lettering("SETTLED: NO",(0,-.094,0),.21,m["mint"],result)
+        reveal = int(frames*.53)
+        keys(result,"scale",[(1,(.001,)*3),(reveal-1,(.001,)*3),(reveal,(1.06,)*3),
+                             (reveal+6,(1,)*3)])
+        for i in range(4):
+            ticket = box("Torn raffle stub",(-2.18+.09*i,1.11,1.2),(.125,.075,.038),m["pink"],.009)
+            keys(ticket,"scale",[(1,(.001,)*3),(reveal,(.001,)*3),(reveal+3,(1,)*3)])
+            keys(ticket,"location",[(reveal,(-2.18,1.11,1.56)),
+                                    (frames,(-2.61+i*.18,.68,.12+i*.034))])
+        kyle = market_actor("dad",(-2.15,1.34,0),.42)
+        market_character_motion(kyle,frames,[(0,(-2.15,1.34,0),(-.14,0),(.27,0),0),
+            (.57,(-2.18,1.31,0),(-.80,-.37),(.45,.44),.18),
+            (1,(-2.19,1.25,0),(-.27,-.30),(.14,.20),.21)])
         market_camera(frames,[(0,(.25,-3.62,1.43),(-.16,.07,1.25),43),(.43,(.13,-2.75,1.45),(-.15,.05,1.36),47),
                               (.44,(1.94,-2.51,2.03),(.21,.08,1.78),45),(1,(1.49,-2.02,1.98),(.21,.08,1.77),50)])
 
@@ -959,18 +974,17 @@ def market_rooftop(frames,m):
         box("Distant building",(x,6,-1.6+high/2),(1.9,2.04,high),m["navy"] if index%2 else m["violet"])
         for z in (.45,1.08):
             box("Lit windows",(x,4.96,z-.71),(1.14,.07,.22),m["glass"])
-    phone=market_phone((.46,-.19,1.47),m["navy"],m["violet"],"WILL KHAI TELL?","YES")
+    phone=market_phone((.46,-.19,1.47),m["navy"],m["violet"],"WILL KHAI TELL?","OPEN")
+    recording=market_lettering("REC",(0,-.091,.33),.101,m["pink"],phone)
+    settlement=market_lettering("SETTLED YES",(0,-.100,-.13),.129,m["mint"],phone)
+    cover=piece(phone,"Settlement plate",(0,-.094,-.13),(.48,.009,.24),m["navy"],.012)
+    press = int(frames*.58)
+    for obj, trigger in ((recording,press),(settlement,int(frames*.76)),(cover,int(frames*.76))):
+        keys(obj,"scale",[(1,(.001,)*3),(trigger-1,(.001,)*3),(trigger,(1,)*3)])
     keys(phone,"rotation_euler",[(1,(.42,0,-.37)),(int(frames*.46),(.12,0,.05)),
                                 (int(frames*.52),(.13,0,-.05)),(frames,(.13,0,.01))])
     keys(phone,"location",[(1,(.46,.14,1.22)),(int(frames*.50),(.46,-.19,1.47)),
                             (frames,(.46,-.19,1.47))])
-    bpy.ops.mesh.primitive_cylinder_add(vertices=26,radius=.10,depth=.04)
-    dollar = bpy.context.object
-    dollar.name = "Leo's dollar"
-    dollar.data.materials.append(yellow)
-    dollar.rotation_euler.x = 1.57
-    keys(dollar,"location",[(1,(-1.06,.38,1.17)),(int(frames*.74),(-1.02,.37,1.19)),
-                            (frames,(-.63,-.08,1.52))])
     jules=market_actor("jules",(-1.04,.65,0),.25)
     milo=market_actor("milo",(1.22,.49,0),-.42)
     market_character_motion(jules,frames,[(0,(-1.04,.92,0),(0,0),(0,0),0),(.54,(-.94,.56,0),(0,-.46),(0,.32),.34),
@@ -979,7 +993,7 @@ def market_rooftop(frames,m):
                                          (1,(1.13,.51,0),(-.63,0),(.33,0),.29)])
     market_camera(frames,[(0,(-4.9,-5.6,4.35),(.0,.85,1.27),38),(.37,(-3.7,-4.4,3.47),(0,.69,1.46),39),
                           (.38,(.15,-2.31,1.91),(.46,-.04,1.39),47),(.72,(.09,-1.97,1.83),(.46,-.19,1.45),52),
-                          (.73,(-2.66,-2.88,1.96),(-.55,.43,1.65),42),(1,(-2.33,-2.58,1.90),(-.52,.42,1.66),47)])
+                          (.73,(.68,-1.82,1.78),(.46,-.19,1.46),53),(1,(.65,-1.61,1.74),(.46,-.19,1.46),55)])
 
 
 def town_house(x, y, base, width, paint, m):

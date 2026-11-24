@@ -181,7 +181,8 @@ def camera(start, finish, target, lens, frames):
     if not shorts_style:
         return
     inserts = {
-        "town": ((-1.9, -1.8, 1.94), (-.13, -.55, 1.89), 52, .50),
+        "town": ((-.24, -2.7, 2.01), (.05, -.87, 1.89), 40, .50),
+        "knock": ((.99, -.91, 2.18), (1.72, .78, 2.15), 47, .67),
         "lie": ((-.02, -1.68, 2.02), (-1.13, .15, 1.77), 48, .46),
         "appear": ((-.28, -.64, 1.95), (.05, 2.43, 1.56), 53, .54),
         "twist": ((1.12, -1.86, 2.19), (1.21, .78, 2.12), 53, .68),
@@ -392,6 +393,8 @@ def hallway(action, frames):
     mom.scale = (1.1,)*3
     if action in {"open", "key"} and avatar == "roblox-r15":
         mom.location.x = 1.84
+    if action == "knock" and shorts_style:
+        mom.location.x = 1.72
     keys(kid_head, "rotation_euler", [(1, (0, 0, -.10)), (frames, (.11, 0, .37))])
     keys(mom_head, "rotation_euler", [(1, (.04, 0, 0)), (frames, (-.12, 0, -.28))])
     if action == "appear":

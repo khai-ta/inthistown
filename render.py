@@ -679,9 +679,22 @@ def stage_market(action, frames):
     if action in {"market_count", "market_end"}:
         neon = piece(board, "Pulse bar", (0, -.19, -.49), (3.72, .045, .062), pink, .012)
         keys(neon, "scale", [(1, (1, 1, 1)), (frames, (.04, 1, 1))])
+    if action == "market_count":
+        for index, numeral in enumerate(("3", "2", "1")):
+            digit = market_lettering(numeral, (0, -.2, .69), .58, pink, board)
+            onset = 1 + int(frames * (.39 + index*.15))
+            end = 1 + int(frames * (.53 + index*.15))
+            keys(digit, "scale", [(1, (.001,)*3), (onset-1, (.001,)*3), (onset, (1.16,)*3),
+                                  (min(end-1, onset+4), (.88,)*3), (end, (.001,)*3)])
     light("AREA", (-3, -2.9, 4.4), 785, (.55, .72, 1), (0, 1, 1.2), 3.9)
     light("AREA", (3, -1.7, 3.8), 575, (1, .57, .69), (0, 0, 1.4), 3.0)
     light("AREA", (0, 2.18, 4.85), 690, (.37, 1, .8), (0, 0, 1.0), 3.2)
+    if action == "market_blackout":
+        midpoint = frames // 2
+        for lamp in (obj.data for obj in scene.objects if obj.type == "LIGHT"):
+            full = lamp.energy
+            keys(lamp, "energy", [(1, full), (midpoint-1, full), (midpoint, full*.08),
+                                  (int(frames*.73), full*.10), (int(frames*.76), full*.96)])
     sky.inputs["Color"].default_value = (.095, .155, .39, 1)
     market_camera(action, frames)
 

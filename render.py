@@ -1,6 +1,6 @@
 """Build and render a shot with Blender's embedded Python."""
 
-import os
+import math
 from pathlib import Path
 import sys
 
@@ -110,14 +110,39 @@ def light(kind, pos, power, color, target, size):
         obj.data.size = size
 
 
-def clock(name, pos, scale):
+def clock(name, pos, scale, frames=0):
     prop = group(name, pos)
     piece(prop, "Clock rim", (0, 0, 0), (.58, .13, .58), ink, .07)
     piece(prop, "Clock face", (0, -.074, 0), (.45, .036, .45), cream)
     piece(prop, "Hour hand", (.066, -.10, .015), (.146, .025, .032), ink, .008)
-    piece(prop, "Minute hand", (0, -.10, .082), (.027, .025, .19), red, .008)
+    hand = group("Clock hand pivot", (0, -.10, 0))
+    hand.parent = prop
+    piece(hand, "Minute hand", (0, 0, .082), (.027, .025, .19), red, .008)
+    if frames:
+        keys(hand, "rotation_euler", [(1, (0, 0, 0)), (frames, (0, math.tau, 0))])
     prop.scale = (scale,) * 3
     return prop
+
+
+
+def cat(pos, frames):
+    rig = group("Cat", pos)
+    fur = material("Ginger fur", (.61, .22, .065))
+    piece(rig, "Body", (0, 0, .18), (.27, .49, .28), fur, .05)
+    head = group("Cat head", (0, -.22, .31))
+    head.parent = rig
+    piece(head, "Face", (0, 0, 0), (.29, .24, .24), fur, .048)
+    for side in (-1, 1):
+        ear = piece(head, "Ear", (side * .095, 0, .132), (.082, .09, .13), fur, .022)
+        ear.rotation_euler.y = side * .25
+        piece(head, "Eye", (side * .064, -.119, .015), (.032, .022, .032), ink, .005)
+        for y in (-.16, .16):
+            piece(rig, "Paw", (side * .09, y, .043), (.09, .14, .088), cream, .018)
+    piece(head, "Nose", (0, -.119, -.036), (.043, .025, .027), blush, .008)
+    tail = piece(rig, "Tail", (0, .29, .26), (.08, .09, .29), fur, .025)
+    tail.rotation_euler.x = -.42
+    keys(head, "rotation_euler", [(1, (0, 0, -.35)), (frames // 2, (.19, 0, .35)),
+                                  (frames, (0, 0, .12))])
 
 
 def town(frames):
@@ -185,6 +210,7 @@ def hallway(action, frames):
         box("Console leg", (x, 1.84, .4), (.11, .41, .8), brown)
     broken = clock("Broken clock", (-2.25, 1.76, .99), .65)
     broken.rotation_euler = (.9, .15, -.4)
+    cat((-1.87, 1.83, .92), frames)
     for x in (-2.1, 2.08):
         box("Picture frame", (x, 2.51, 2.23), (.7, .08, .82), cream)
         box("Picture", (x, 2.45, 2.23), (.51, .06, .63), coral if x < 0 else teal)
@@ -222,7 +248,7 @@ def hallway(action, frames):
             else:
                 hinge.rotation_euler.z = angle
             double, _, double_arms, _ = actor("Double", (.18, 3.03, .06), teal, brown, peach, -.13)
-            prop = clock("Ticking clock", (.1, -.44, 1.38), .7)
+            prop = clock("Ticking clock", (.1, -.44, 1.38), .7, frames)
             prop.parent = double
             keys(double, "location", [(1, (.18, 3.03, .06)), (frames, (.18, 1.91, .06))])
             for arm in double_arms:
@@ -238,7 +264,7 @@ def hallway(action, frames):
     light("AREA", (2, 1, 3.8), 360, (.63, .79, 1), (0, 1, 1), 4)
     light("AREA", (0, 3.65, 2.6), 90, (.72, .62, 1), (0, 1, 1), 1.5)
     shots = {
-        "lie": ((-.05, -4, 1.94), (.19, -3.65, 1.87), (-.12, .45, 1.3), 34),
+        "lie": ((-.05, -4, 1.94), (.19, -3.65, 1.87), (-.35, .64, 1.3), 32),
         "appear": ((2.14, -3.8, 2.16), (1.72, -3.35, 2), (.27, 1.9, 1.5), 37),
         "knock": ((.28, -.56, 1.81), (.19, .02, 1.74), (.22, 2.39, 1.53), 50),
         "open": ((1.02, -1.58, 1.9), (.66, -.68, 1.8), (.27, 2.29, 1.36), 40),
@@ -247,7 +273,7 @@ def hallway(action, frames):
     camera(*shots[action], frames)
 
 
-episode_path, index, duration, width, fps, target = sys.argv[sys.argv.index("--")+1:]
+episode_path, index, duration, width, fps, engine, target = sys.argv[sys.argv.index("--")+1:]
 shot = read_episode(episode_path)["shots"][int(index)]
 frames = max(12, int(duration))
 bpy.ops.wm.read_factory_settings(use_empty=True)
@@ -257,7 +283,8 @@ scene.world.use_nodes = True
 sky = scene.world.node_tree.nodes.get("Background")
 sky.inputs["Color"].default_value = (.32, .48, .76, 1)
 sky.inputs["Strength"].default_value = .65
-scene.render.engine = os.environ.get("TOWN_RENDER_ENGINE", "CYCLES")
+scene.render.engine = engine
+scene.eevee.taa_render_samples = 16
 scene.render.use_persistent_data = True
 scene.cycles.samples = 8
 scene.cycles.use_denoising = True

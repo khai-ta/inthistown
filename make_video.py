@@ -126,7 +126,8 @@ def render_episode(args):
                 result = subprocess.run([
                     args.blender, "-b", "-t", str(args.threads), "--python-exit-code", "1",
                     "--python", str(ROOT / "render.py"), "--", str(episode_path), str(index),
-                    str(frames), str(args.width), str(args.fps), str(work / stem)
+                    str(frames), str(args.width), str(args.fps),
+                    "CYCLES" if args.engine == "cycles" else "BLENDER_EEVEE", str(work / stem)
                 ], stdout=log, stderr=subprocess.STDOUT)
             raw = list(work.glob(f"{stem}*.mp4"))
             if result.returncode or len(raw) != 1:
@@ -167,6 +168,7 @@ def main():
     parser.add_argument("--width", type=int, choices=(180, 360, 540, 720, 1080), default=540)
     parser.add_argument("--fps", type=int, choices=(12, 24, 30), default=24)
     parser.add_argument("--threads", type=int, default=min(8, os.cpu_count() or 1))
+    parser.add_argument("--engine", choices=("eevee", "cycles"), default="eevee")
     parser.add_argument("--blender", default="blender")
     args = parser.parse_args()
     for program in (args.blender, "ffmpeg", "say"):

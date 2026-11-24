@@ -12,7 +12,7 @@ brew install ffmpeg
 python3 make_video.py episodes/doors.json -o output/the-door-that-knocked-back.mp4
 ```
 
-The standard render is 540 × 960 at 24 fps. Preview timing with `--width 180 --fps 12`, or use `--width 1080` for a larger export. Blender renders on the CPU by default. The run prints each shot as it starts. The final MP4 appears after all shots finish.
+The standard render is 540 × 960 at 24 fps. Preview timing with `--width 180 --fps 12`, or use `--width 1080` for a larger export. Blender uses Eevee by default. Pass `--engine cycles` for CPU rendering if Eevee is unavailable. The run prints each shot as it starts. The final MP4 appears after all shots finish.
 
 Run `say -v '?'` to list voices installed on the Mac. Choose one with `--voice Daniel` or change the delivery speed with `--rate 175`. If Blender is installed outside your PATH, pass `--blender /Applications/Blender.app/Contents/MacOS/Blender`.
 

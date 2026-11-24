@@ -120,6 +120,11 @@ class PartySet:
             power.keyframe_insert(data_path="default_value", frame=1)
             power.default_value = 2.7
             power.keyframe_insert(data_path="default_value", frame=self.time(.48))
+        if not lead and self.action != "party_lantern":
+            self.r.light("AREA",(x+.57,front-.54,2.65),42,(1,.18,.46),(x,front-.85,.18),1.35)
+            glow = bpy.context.object.data
+            if self.action in {"party_street","party_end"}:
+                self.key(glow,"energy",[(0,0),(.43,0),(.48,42),(1,42)])
 
     def tree(self, x, y, size):
         self.block("Trunk", (x,y,.83*size), (.19*size,.19*size,1.66*size), self.r.brown)

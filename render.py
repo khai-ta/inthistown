@@ -1087,7 +1087,11 @@ def market_neighborhood(action,frames,m):
             town_tree(x,y,s,m)
         for x in (-4.3,4.33):
             town_lamp(x,.87,m)
-        town_car(3.85,-.92,.44,m["brick"],m)
+        if action == "market_street":
+            box("Parking bay",(2.66,-2.08,-.008),(1.25,2.26,.037),m["concrete"],.012)
+            town_car(2.66,-2.08,0,m["brick"],m)
+        else:
+            town_car(3.85,-.92,.44,m["brick"],m)
         town_bench(-3.29,.9,m)
         if action == "market_street":
             entries=[(-2.82,1.29,.48,"walk"),(2.95,.68,-.37,"talk"),

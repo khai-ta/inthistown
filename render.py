@@ -57,6 +57,74 @@ def keys(obj, prop, values):
         obj.keyframe_insert(data_path=prop, frame=frame)
 
 
+def face_stroke(parent, name, points, radius, mat):
+    data = bpy.data.curves.new(name, "CURVE")
+    data.dimensions = "3D"
+    data.bevel_depth = radius
+    data.bevel_resolution = 3
+    path = data.splines.new("POLY")
+    path.points.add(len(points)-1)
+    for control, (x, z) in zip(path.points, points):
+        control.co = (x, -.268, z, 1)
+    obj = bpy.data.objects.new(name, data)
+    bpy.context.collection.objects.link(obj)
+    obj.parent = parent
+    data.materials.append(mat)
+    return obj
+
+
+def expressive_face(face, costume):
+    eyes = [obj for obj in face.children if obj.name.startswith("Eye")]
+    brows = [obj for obj in face.children if obj.name.startswith("Brow")]
+    for obj in face.children:
+        if obj.name.startswith(("Mouth", "Smile", "Mustache")) and costume != "mayor":
+            obj.hide_render = True
+    for eye in eyes:
+        eye.scale.z = 1.25
+    smile = face_stroke(face, "Happy smile", [(-.112,1.945),(-.064,1.902),(0,1.886),
+                                           (.064,1.902),(.112,1.945)], .012, ink)
+    frown = face_stroke(face, "Worried mouth", [(-.103,1.885),(-.053,1.912),(0,1.925),
+                                             (.053,1.912),(.103,1.885)], .012, ink)
+    open_mouth = piece(face, "Surprised mouth", (0,-.264,1.907), (.119,.025,.124), ink, .044)
+    tooth = piece(face, "Top teeth", (0,-.279,1.944), (.071,.010,.019), cream, .006)
+    lead_moods = {
+        "market_street": ("smile","smile"),
+        "market_win": ("smile","open"),
+        "market_ticket": ("smile","open"),
+        "market_friend": ("worried","worried"),
+        "market_mayor": ("smile","worried") if costume == "mayor" else ("worried","open"),
+        "market_count": ("smile","worried"),
+        "market_trade": ("worried","open"),
+        "market_blackout": ("worried","open") if costume != "jules" else ("worried","worried"),
+        "market_hook": ("worried","smile"),
+        "market_end": ("smile","worried"),
+    }
+    first, last = lead_moods[shot["action"]]
+    if costume and costume.startswith("crowd"):
+        first = "smile"
+        last = "open" if shot["action"] in {"market_win","market_hook"} else "smile"
+    reaction = max(3, int(frames * .46))
+    for label, objects in (("smile",(smile,)),("worried",(frown,)),("open",(open_mouth,tooth))):
+        for obj in objects:
+            for f, mood in ((1,first),(reaction-1,first),(reaction,last),(frames,last)):
+                obj.hide_render = label != mood
+                obj.keyframe_insert(data_path="hide_render", frame=f)
+    for brow in brows:
+        side = -1 if brow.location.x < 0 else 1
+        keys(brow, "rotation_euler", [(1,(0,side*(.24 if first=="worried" else .07),0)),
+             (reaction-1,(0,side*(.24 if first=="worried" else .07),0)),
+             (reaction,(0,side*(.31 if last=="worried" else -.13),0)),
+             (frames,(0,side*(.31 if last=="worried" else -.13),0))])
+        z = brow.location.z
+        keys(brow, "location", [(1,(brow.location.x,brow.location.y,z)),
+                               (reaction,(brow.location.x,brow.location.y,z+(.033 if last=="open" else .008)))])
+    blink = max(3, int(frames*.25))
+    for eye in eyes:
+        end_height = 1.46 if last == "open" else 1.16
+        keys(eye, "scale", [(1,(1,1,1.16)),(blink-2,(1,1,1.16)),(blink,(1,1,.12)),
+                          (blink+2,(1,1,1.16)),(reaction,(1,1,end_height)),(frames,(1,1,end_height))])
+
+
 def roblox_actor(name, pos, shirt, hair, yaw, adult, costume=None):
     before = set(bpy.data.objects)
     bpy.ops.import_scene.fbx(filepath=str(AVATAR_FILE), use_anim=False)
@@ -72,6 +140,8 @@ def roblox_actor(name, pos, shirt, hair, yaw, adult, costume=None):
     skin = peach
     pants = denim
     shoe = ink
+    if costume and costume.startswith("crowd"):
+        skin = material(name + " skin", (.48,.24,.11) if costume=="crowd_bun" else (.77,.47,.28))
     if costume == "jules":
         skin = material("Jules skin", (.51, .255, .14))
         pants = material("Jules overalls", (.035, .22, .20))
@@ -148,6 +218,21 @@ def roblox_actor(name, pos, shirt, hair, yaw, adult, costume=None):
         for side in (-1, 1):
             lapel = piece(rig, "Lapel", (side*.134, -.239, 1.43), (.088, .026, .27), shirt, .007)
             lapel.rotation_euler.y = side*.24
+    if costume and costume.startswith("crowd"):
+        accent = material(name + " accessory", (.35,.64,.74) if costume=="crowd_cap" else (.79,.34,.18))
+        if costume == "crowd_cap":
+            piece(face,"Cap dome",(0,.01,2.19),(.50,.49,.15),accent,.065)
+            piece(face,"Cap bill",(0,-.28,2.153),(.39,.25,.055),accent,.023)
+        elif costume == "crowd_glasses":
+            for side in (-1,1):
+                frame_obj=piece(face,"Glasses frame",(side*.105,-.278,2.014),(.174,.025,.092),ink,.017)
+                frame_obj.display_type="WIRE"
+                piece(face,"Glasses lens",(side*.105,-.294,2.014),(.127,.013,.057),accent,.012)
+        else:
+            piece(face,"High bun",(0,.17,2.28),(.25,.24,.22),hair,.083)
+            piece(rig,"Crossbody strap",(0,-.224,1.32),(.08,.031,.61),accent,.012).rotation_euler.y = -.44
+    if shot["action"] in MARKET_ACTIONS:
+        expressive_face(face, costume)
     bpy.context.view_layer.update()
     world = face.matrix_world.copy()
     face.parent = armature

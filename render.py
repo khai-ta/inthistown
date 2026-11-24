@@ -1,5 +1,6 @@
 """Build and render a shot with Blender's embedded Python."""
 
+import os
 from pathlib import Path
 import sys
 
@@ -256,7 +257,8 @@ scene.world.use_nodes = True
 sky = scene.world.node_tree.nodes.get("Background")
 sky.inputs["Color"].default_value = (.32, .48, .76, 1)
 sky.inputs["Strength"].default_value = .65
-scene.render.engine = "CYCLES"
+scene.render.engine = os.environ.get("TOWN_RENDER_ENGINE", "CYCLES")
+scene.render.use_persistent_data = True
 scene.cycles.samples = 8
 scene.cycles.use_denoising = True
 scene.view_settings.view_transform = "AgX"

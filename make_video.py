@@ -5,6 +5,7 @@ import math
 import os
 from pathlib import Path
 import re
+import sys
 import shutil
 import subprocess
 import tempfile
@@ -87,9 +88,9 @@ def sound_effect(path, action, duration):
         for i in range(min(round(length * SAMPLE_RATE), len(samples) - position)):
             t = i / SAMPLE_RATE
             envelope = min(t * 700, 1) * math.exp(-5 * t / length)
-            tone = math.sin(math.tau * pitch * t) + .23 * math.sin(math.tau * pitch * 2.7 * t)
+            tone = math.sin((2 * math.pi) * pitch * t) + .23 * math.sin((2 * math.pi) * pitch * 2.7 * t)
             samples[position + i] += round(32767 * gain * envelope * tone)
-    if os.sys.byteorder == "big":
+    if sys.byteorder == "big":
         samples.byteswap()
     with wave.open(str(path), "wb") as file:
         file.setparams((1, 2, SAMPLE_RATE, 0, "NONE", "not compressed"))
@@ -106,7 +107,8 @@ def render_episode(args):
         work = Path(temp)
         events = []
         clips = []
-        offset = 0
+        audio_files = []
+        total_frames = 0
         for index, shot in enumerate(episode["shots"]):
             print(f"Shot {index + 1}/{len(episode['shots'])} · {shot['action']}", flush=True)
             # Read plain narration from a file. Escape the macOS speech command opener.
@@ -118,7 +120,7 @@ def render_episode(args):
                 speech = file.getnframes() / file.getframerate()
             frames = max(12, math.ceil((speech + PAD_START + PAD_END) * args.fps))
             duration = frames / args.fps
-            events.extend(captions(shot["line"], speech, offset))
+            events.extend(captions(shot["line"], speech, total_frames / args.fps))
             stem = f"shot-{index:03d}-"
             with (work / "render.log").open("w") as log:
                 result = subprocess.run([
@@ -129,20 +131,27 @@ def render_episode(args):
             raw = list(work.glob(f"{stem}*.mp4"))
             if result.returncode or len(raw) != 1:
                 raise RuntimeError((work / "render.log").read_text()[-4000:])
-            clip = f"clip-{index:03d}.mp4"
+            audio_name = f"voice-{index:03d}.wav"
             effects = sound_effect(work / "effects.wav", shot["action"], duration)
             inputs = ["-i", "effects.wav"] if effects else []
-            audio = f"[1:a]adelay={round(PAD_START * 1000)},apad"
+            audio = f"[0:a]adelay={round(PAD_START * 1000)},apad"
             if effects:
-                audio += "[voice];[voice][2:a]amix=inputs=2:duration=first:normalize=0"
-            ffmpeg("-i", raw[0].name, "-i", "speech.wav", *inputs, "-filter_complex", audio + "[audio]",
-                   "-map", "0:v:0", "-map", "[audio]", "-c:v", "copy", "-c:a", "aac",
-                   "-t", str(duration), clip, cwd=work)
-            clips.append(f"file '{clip}'")
-            offset += duration
+                audio += "[voice];[voice][1:a]amix=inputs=2:duration=first:normalize=0"
+            ffmpeg("-i", "speech.wav", *inputs, "-filter_complex", audio + "[audio]",
+                   "-map", "[audio]", "-ar", str(SAMPLE_RATE), "-c:a", "pcm_s16le",
+                   "-t", str(duration), audio_name, cwd=work)
+            clips.append(f"file '{raw[0].name}'")
+            audio_files.append(work / audio_name)
+            total_frames += frames
+        with wave.open(str(work / "narration.wav"), "wb") as file:
+            file.setparams((1, 2, SAMPLE_RATE, 0, "NONE", "not compressed"))
+            for path in audio_files:
+                with wave.open(str(path), "rb") as part:
+                    file.writeframes(part.readframes(part.getnframes()))
         (work / "clips.txt").write_text("\n".join(clips) + "\n")
         (work / "captions.ass").write_text(CAPTION_HEADER + "\n".join(events) + "\n", encoding="utf-8")
-        ffmpeg("-f", "concat", "-safe", "1", "-i", "clips.txt", "-vf", "ass=captions.ass",
+        ffmpeg("-f", "concat", "-safe", "1", "-i", "clips.txt", "-i", "narration.wav",
+               "-map", "0:v", "-map", "1:a", "-vf", "ass=captions.ass",
                "-c:v", "libx264", "-crf", "17", "-pix_fmt", "yuv420p", "-c:a", "aac",
                "-b:a", "160k", "-movflags", "+faststart", "final.mp4", cwd=work)
         (work / "final.mp4").replace(output)

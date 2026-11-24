@@ -65,7 +65,7 @@ To mix a local copy of “Numbers” by TEMPOREX under the narration, run the fo
 
 ## Render Everybody Bet Yes
 
-The Kalshi-town episode uses the [official Roblox Blocky R15 rig](https://create.roblox.com/docs/avatar/resources) with three custom avatar designs. Milo wears a varsity hoodie and beanie, Jules has a compact build with overalls and double puffs, and the mayor has a broad build with a suit and fedora. The standalone story starts on the school lawn and moves through a park fountain, bedroom, diner, town hall, street raffle, alley booth, crosswalk and rooftop. Each location has its own staging and camera moves.
+The Kalshi-town episode uses the [official Roblox Blocky R15 rig](https://create.roblox.com/docs/avatar/resources) with custom avatar designs for Khai, Leo, Prakhar, Nikhil, Kyle and Mayor Michael, plus background residents. The standalone story starts on the school lawn and moves through a park fountain, bedroom, diner, town hall, street raffle, alley booth, crosswalk and rooftop. Each location has its own staging and camera moves.
 
 ```sh
 .venv/bin/python fetch_avatar.py

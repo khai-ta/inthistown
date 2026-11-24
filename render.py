@@ -659,13 +659,15 @@ def market_camera(frames, moves):
 
 def market_actor(role, position, yaw=0):
     colors = {
-        "milo": ((.24, .092, .42), brown, False, "milo"),
-        "jules": ((.76, .14, .36), ink, False, "jules"),
-        "mayor": ((.09, .36, .29), brown, True, "mayor"),
-        "dad": ((.64, .20, .072), brown, True, None),
+        "milo": ("Khai", (.24, .092, .42), brown, False, "milo"),
+        "jules": ("Leo", (.69, .12, .24), ink, False, "jules"),
+        "mayor": ("Michael", (.09, .36, .29), brown, True, "mayor"),
+        "dad": ("Kyle", (.64, .20, .072), brown, True, None),
+        "prakhar": ("Prakhar", (.10,.45,.25), ink, False, "crowd_cap"),
+        "nikhil": ("Nikhil", (.80,.43,.10), brown, False, "crowd_glasses"),
     }
-    shade, hair, adult, costume = colors[role]
-    return roblox_actor(role.title(), position, material(role, shade), hair, yaw, adult, costume)
+    name, shade, hair, adult, costume = colors[role]
+    return roblox_actor(name, position, material(name, shade), hair, yaw, adult, costume)
 
 
 def market_character_motion(character, frames, poses):
@@ -725,6 +727,10 @@ def market_school(frames, m):
         (.68, (-.38,-.68,0), (0,-.59), (0,.30), .51),
         (1, (-.29,-.74,0), (0,-.24), (0,.20), .26),
     ])
+    nikhil = market_actor("nikhil",(2.49,.16,0),-.30)
+    market_character_motion(nikhil,frames,[(0,(2.49,.16,0),(-.25,0),(.18,0),0),
+        (.45,(2.39,.07,0),(-.67,0),(.37,0),-.21),
+        (1,(2.48,.10,0),(-.18,-.15),(.24,.13),.10)])
     for i in range(14):
         dot = box("Snow flurry", ((i*13%37)/7-2.4, .6+(i%3)*.35, 2.4), (.034, .035, .043), cream, .006)
         keys(dot, "location", [(1, dot.location.copy()), (frames, (dot.location.x+.2, dot.location.y, .05+i*.15))])
@@ -769,8 +775,8 @@ def market_fountain(frames, m):
         keys(coin,"location",[(launch,(0,0,.84)),(int(frames*.64),(x*1.18,y*.75,2.8+(i%6)*.08)),
                               (frames,(x*2.0,y*1.5,.19 + (i%3)*.22))])
         keys(coin,"rotation_euler",[(launch,(0,0,0)),(frames,(i*.7,5.8,i*.41))])
-    jules = market_actor("jules", (-1.82,-.05,0), -.12)
-    market_character_motion(jules,frames,[(0,(-1.82,-.05,0),(0,0),(0,0),.05),
+    prakhar = market_actor("prakhar", (-1.82,-.05,0), -.12)
+    market_character_motion(prakhar,frames,[(0,(-1.82,-.05,0),(0,0),(0,0),.05),
         (.34,(-1.76,-.06,0),(-.62,-.76),(.26,.35),-.14),
         (.69,(-1.55,-.27,.12),(-.88,-.9),(.45,.4),.11),
         (1,(-1.62,-.32,0),(-.38,-.4),(.23,.13),0)])
@@ -796,7 +802,7 @@ def market_bedroom(frames,m):
     box("Window", (.87,2.405,2.42),(1.66,.12,1.29),m["navy"])
     box("Window pane", (.87,2.33,2.43),(1.47,.038,1.1),m["glass"])
     box("Bedside table", (.1,.87,.44),(1.08,.76,.87),brown)
-    phone = market_phone((.1,.78,1.24),m["navy"],m["violet"],"MILO: VANISH?","99% YES")
+    phone = market_phone((.1,.78,1.24),m["navy"],m["violet"],"KHAI: VANISH?","99% YES")
     keys(phone,"rotation_euler",[(1,(.88,0,0)),(frames//3,(.51,0,.06)),(frames,(.51,0,.04))])
     milo = market_actor("milo", (-1.03,-.11,0),.19)
     market_character_motion(milo,frames,[(0,(-1.03,-.11,0),(0,0),(0,0),0),(.55,(-.96,.13,0),(0,-.7),(0,.38),.29),
@@ -817,7 +823,7 @@ def market_diner(frames,m):
     box("Diner table",(0,.4,1.06),(1.70,1.02,.16),cream)
     box("Pedestal",(0,.40,.52),(.38,.44,1.0),m["concrete"])
     market_lettering("DINER", (0,2.38,2.8),.5,cream)
-    phone = market_phone((.42,.13,1.45),m["navy"],m["violet"],"MILO","99%")
+    phone = market_phone((.42,.13,1.45),m["navy"],m["violet"],"KHAI","99%")
     keys(phone,"location",[(1,(.42,.13,1.45)),(int(frames*.42),(-.12,.14,1.55)),
                           (int(frames*.62),(-.37,.15,1.25)),(frames,(-.37,.15,1.25))])
     keys(phone,"rotation_euler",[(1,(.20,0,0)),(int(frames*.52),(1.18,0,-.24)),
@@ -953,14 +959,14 @@ def market_rooftop(frames,m):
         box("Distant building",(x,6,-1.6+high/2),(1.9,2.04,high),m["navy"] if index%2 else m["violet"])
         for z in (.45,1.08):
             box("Lit windows",(x,4.96,z-.71),(1.14,.07,.22),m["glass"])
-    phone=market_phone((.46,-.19,1.47),m["navy"],m["violet"],"WILL MILO TELL?","YES")
+    phone=market_phone((.46,-.19,1.47),m["navy"],m["violet"],"WILL KHAI TELL?","YES")
     keys(phone,"rotation_euler",[(1,(.42,0,-.37)),(int(frames*.46),(.12,0,.05)),
                                 (int(frames*.52),(.13,0,-.05)),(frames,(.13,0,.01))])
     keys(phone,"location",[(1,(.46,.14,1.22)),(int(frames*.50),(.46,-.19,1.47)),
                             (frames,(.46,-.19,1.47))])
     bpy.ops.mesh.primitive_cylinder_add(vertices=26,radius=.10,depth=.04)
     dollar = bpy.context.object
-    dollar.name = "Jules's dollar"
+    dollar.name = "Leo's dollar"
     dollar.data.materials.append(yellow)
     dollar.rotation_euler.x = 1.57
     keys(dollar,"location",[(1,(-1.06,.38,1.17)),(int(frames*.74),(-1.02,.37,1.19)),
@@ -1094,7 +1100,7 @@ def market_neighborhood(action,frames,m):
             town_car(3.85,-.92,.44,m["brick"],m)
         town_bench(-3.29,.9,m)
         if action == "market_street":
-            entries=[(-2.82,1.29,.48,"walk"),(2.95,.68,-.37,"talk"),
+            entries=[(-2.82,1.29,.48,"walk"),(3.25,1.28,-.37,"talk"),
                      (-3.28,-.51,.39,"walk"),(3.9,1.48,-.52,"talk")]
         else:
             entries=[(-2.97,1.07,.54,"react"),(2.21,1.19,-.55,"react"),

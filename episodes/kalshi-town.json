@@ -3,15 +3,15 @@
   "avatar": "roblox-r15",
   "style": "shorts",
   "shots": [
-    {"action":"market_street","line":"In this town, everyone bet on Kalshi to get rich. Our school even put the odds of a snow day on the front lawn."},
-    {"action":"market_win","line":"My neighbor bet the fountain would turn gold. One second it was water. The next, gold coins rained down on her head."},
-    {"action":"market_ticket","line":"Then my phone lit up in my bedroom. Will Milo disappear by midnight? I had ninety-nine percent odds of vanishing."},
-    {"action":"market_friend","line":"I showed Jules at the diner. She snatched my phone and flipped it over. Last week, they bet I'd lose my voice, she whispered."},
-    {"action":"market_mayor","line":"At town hall, the mayor slid a contract across his desk. I could win a million dollars. In return, everyone would forget my name."},
-    {"action":"market_count","line":"Outside, Dad was selling tickets to watch me disappear. When I waved, he asked if my parents knew where I was."},
+    {"action":"market_street","line":"In this town, everyone bet on Kalshi to get rich. Nikhil put the odds of a snow day on our school lawn."},
+    {"action":"market_win","line":"Prakhar bet the fountain would turn gold. One second it was water. The next, coins rained down on his head."},
+    {"action":"market_ticket","line":"Then my phone lit up in my bedroom. Will Khai disappear by midnight? I had ninety-nine percent odds of vanishing."},
+    {"action":"market_friend","line":"I showed Leo at the diner. He snatched my phone and flipped it over. Last week, they bet I'd lose my voice, he whispered."},
+    {"action":"market_mayor","line":"At town hall, Mayor Michael slid a contract across his desk. I could win a million dollars. In return, everyone would forget my name."},
+    {"action":"market_count","line":"Outside, my dad Kyle was selling tickets to watch me disappear. When I waved, he asked if my parents knew where I was."},
     {"action":"market_trade","line":"I ran to the only empty betting booth. One dollar left. I dropped it in and slammed No."},
-    {"action":"market_blackout","line":"At midnight the streetlights went out. I stood right in front of Jules, but she looked straight through me."},
-    {"action":"market_hook","line":"Then she grabbed my sleeve. Milo? She'd kept her dollar. She was the only person in town who never bet on me."},
-    {"action":"market_end","line":"We climbed onto the roof. Then my phone buzzed again. Will Milo tell anyone? This time, Jules reached for her dollar."}
+    {"action":"market_blackout","line":"At midnight the streetlights went out. I stood right in front of Leo, but he looked straight through me."},
+    {"action":"market_hook","line":"Then he grabbed my sleeve. Khai? He'd kept his dollar. He was the only person in town who never bet on me."},
+    {"action":"market_end","line":"We climbed onto the roof. Then my phone buzzed again. Will Khai tell anyone? This time, Leo reached for his dollar."}
   ]
 }

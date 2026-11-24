@@ -348,7 +348,7 @@ def hallway(action, frames):
     kid, kid_head, kid_arms, kid_legs = actor("Narrator", (-1.13, .15, 0), teal, brown, peach, .36)
     mom, mom_head, mom_arms, _ = actor("Mom", (1.1, .78, 0), coral, ink, peach, -.38, adult=True)
     mom.scale = (1.1,)*3
-    if action == "open" and avatar == "roblox-r15":
+    if action in {"open", "key"} and avatar == "roblox-r15":
         mom.location.x = 1.84
     keys(kid_head, "rotation_euler", [(1, (0, 0, -.10)), (frames, (.11, 0, .37))])
     keys(mom_head, "rotation_euler", [(1, (.04, 0, 0)), (frames, (-.12, 0, -.28))])
@@ -379,7 +379,7 @@ def hallway(action, frames):
             for frame in impacts:
                 jitter.extend([(frame-1, (0, 0, 0)), (frame, (0, 0, .034)), (frame+2, (0, 0, 0))])
             keys(hinge, "rotation_euler", jitter)
-        if action in {"open", "twist", "twin", "key", "escape"}:
+        if action in {"open", "twin", "key", "escape"} or (action == "twist" and avatar is None):
             angle = -1.9
             if action == "open":
                 keys(hinge, "rotation_euler", [(1, (0, 0, 0)), (frames//3, (0, 0, angle)), (frames, (0, 0, angle))])

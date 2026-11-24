@@ -102,9 +102,9 @@ Style: Title,Arial,48,&H00F9F9FF,&H000000FF,&H00101923,&H80000000,-1,0,0,0,100,1
     filters = (
         "[3:a]asplit=2[up][slow];"
         "[up]atrim=duration=58,asetpts=PTS-STARTPTS,atempo=1.06,apad,atrim=duration=58,"
-        "afade=t=in:d=.25,afade=t=out:st=57.60:d=.40,volume=.20,adelay=12000[m1];"
+        "afade=t=in:d=.25,afade=t=out:st=57.60:d=.40,volume=.20,adelay=12000:all=1[m1];"
         f"[slow]atrim=start=28,asetpts=PTS-STARTPTS,atempo=.84,atrim=duration={ending-70},"
-        f"afade=t=in:d=.50,afade=t=out:st={ending-70-.20}:d=.20,volume=.23,adelay=70000[m2];"
+        f"afade=t=in:d=.50,afade=t=out:st={ending-70-.20}:d=.20,volume=.23,adelay=70000:all=1[m2];"
         "[1:a][2:a][m1][m2]amix=inputs=4:duration=first:normalize=0,"
         "alimiter=limit=.94:level=0:latency=1[mix]"
     )

@@ -12,6 +12,7 @@ import tempfile
 import wave
 
 from episode import read_episode
+from eleven_voice import DEFAULT_MODEL, DEFAULT_VOICE, speak
 
 ROOT = Path(__file__).resolve().parent
 SAMPLE_RATE = 48000
@@ -48,25 +49,55 @@ def caption_time(seconds):
     return f"{hours}:{minutes:02}:{whole:02}.{fraction:02}"
 
 
-def captions(line, seconds, offset):
-    words = line.replace("{", "(").replace("}", ")").replace(chr(92), "/").split()
+def captions(line, seconds, offset, words=None):
+    if not words:
+        tokens = line.split()
+        step = seconds / len(tokens)
+        words = [(token, i * step, (i + 1) * step) for i, token in enumerate(tokens)]
     groups = []
     current = []
-    for word in words:
-        if current and (len(current) >= 5 or len(" ".join(current + [word])) > 22):
+    for word, start, end in words:
+        word = word.replace("{", "(").replace("}", ")").replace(chr(92), "/")
+        if current and (len(current) >= 5 or len(" ".join(item[0] for item in current) + " " + word) > 23):
             groups.append(current)
             current = []
-        current.append(word)
+        current.append((word, start, end))
+        if word.endswith((".", "!", "?", "…")):
+            groups.append(current)
+            current = []
     if current:
         groups.append(current)
-    start = offset + PAD_START
+    base = offset + PAD_START
     events = []
-    for group in groups:
-        end = start + seconds * len(group) / len(words)
-        text = " ".join(group)
-        events.append(f"Dialogue: 0,{caption_time(start)},{caption_time(end)},Story,,0,0,0,,{text}")
-        start = end
+    for index, group in enumerate(groups):
+        start = group[0][1]
+        next_start = groups[index + 1][0][1] if index + 1 < len(groups) else seconds
+        end = min(seconds, next_start, max(group[-1][2], start + .22) + .07)
+        if end > start:
+            text = " ".join(item[0] for item in group)
+            events.append(f"Dialogue: 0,{caption_time(base + start)},{caption_time(base + end)},Story,,0,0,0,,{text}")
     return events
+
+
+def narration(args, shots, index, work):
+    line = shots[index]["line"]
+    if args.provider == "elevenlabs":
+        previous = shots[index - 1]["line"] if index else None
+        following = shots[index + 1]["line"] if index + 1 < len(shots) else None
+        audio, words = speak(args.api_key, args.voice or DEFAULT_VOICE, args.model, line, previous, following)
+        source = work / "speech.mp3"
+        source.write_bytes(audio)
+    else:
+        text = re.sub(r"\[\[", "[ [", line)
+        (work / "line.txt").write_text(text, encoding="utf-8")
+        source = work / "speech.aiff"
+        run("say", "-v", args.voice or "Samantha", "-r", str(args.rate), "-f", "line.txt",
+            "-o", source.name, cwd=work)
+        words = None
+    ffmpeg("-i", source.name, "-ar", str(SAMPLE_RATE), "-ac", "1", "speech.wav", cwd=work)
+    with wave.open(str(work / "speech.wav"), "rb") as file:
+        seconds = file.getnframes() / file.getframerate()
+    return seconds, words
 
 
 def sound_effect(path, action, duration):
@@ -111,16 +142,10 @@ def render_episode(args):
         total_frames = 0
         for index, shot in enumerate(episode["shots"]):
             print(f"Shot {index + 1}/{len(episode['shots'])} · {shot['action']}", flush=True)
-            # Read plain narration from a file. Escape the macOS speech command opener.
-            text = re.sub(r"\[\[", "[ [", shot["line"])
-            (work / "line.txt").write_text(text, encoding="utf-8")
-            run("say", "-v", args.voice, "-r", str(args.rate), "-f", "line.txt", "-o", "speech.aiff", cwd=work)
-            ffmpeg("-i", "speech.aiff", "-ar", str(SAMPLE_RATE), "-ac", "1", "speech.wav", cwd=work)
-            with wave.open(str(work / "speech.wav"), "rb") as file:
-                speech = file.getnframes() / file.getframerate()
+            speech, words = narration(args, episode["shots"], index, work)
             frames = max(12, math.ceil((speech + PAD_START + PAD_END) * args.fps))
             duration = frames / args.fps
-            events.extend(captions(shot["line"], speech, total_frames / args.fps))
+            events.extend(captions(shot["line"], speech, total_frames / args.fps, words))
             stem = f"shot-{index:03d}-"
             with (work / "render.log").open("w") as log:
                 result = subprocess.run([
@@ -163,7 +188,9 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("episode", type=Path)
     parser.add_argument("-o", "--output", type=Path, default=ROOT / "output" / "episode.mp4")
-    parser.add_argument("--voice", default="Samantha")
+    parser.add_argument("--provider", choices=("local", "elevenlabs"))
+    parser.add_argument("--voice", help="ElevenLabs voice ID or macOS voice name")
+    parser.add_argument("--model", default=DEFAULT_MODEL, help="ElevenLabs model ID")
     parser.add_argument("--rate", type=int, default=188, help="Words per minute")
     parser.add_argument("--width", type=int, choices=(180, 360, 540, 720, 1080), default=540)
     parser.add_argument("--fps", type=int, choices=(12, 24, 30), default=24)
@@ -171,7 +198,14 @@ def main():
     parser.add_argument("--engine", choices=("eevee", "cycles"), default="eevee")
     parser.add_argument("--blender", default="blender")
     args = parser.parse_args()
-    for program in (args.blender, "ffmpeg", "say"):
+    args.api_key = os.environ.get("ELEVENLABS_API_KEY")
+    args.provider = args.provider or ("elevenlabs" if args.api_key else "local")
+    if args.provider == "elevenlabs" and not args.api_key:
+        parser.error("Set ELEVENLABS_API_KEY to render with ElevenLabs")
+    dependencies = [args.blender, "ffmpeg"]
+    if args.provider == "local":
+        dependencies.append("say")
+    for program in dependencies:
         if not shutil.which(program):
             parser.error(f"Missing executable: {program}")
     if args.rate < 1 or args.threads < 1:

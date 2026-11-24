@@ -974,6 +974,132 @@ def market_rooftop(frames,m):
                           (.73,(-2.66,-2.88,1.96),(-.55,.43,1.65),42),(1,(-2.33,-2.58,1.90),(-.52,.42,1.66),47)])
 
 
+def town_house(x, y, base, width, paint, m):
+    height = 2.12 + width*.09
+    depth = 2.2
+    box("Siding", (x,y,base+height/2), (width,depth,height), paint)
+    for direction in (-1, 1):
+        roof = box("Pitched roof", (x,y+direction*.53,base+height+.31),
+                   (width+.26,1.34,.14), m["navy"], .027)
+        roof.rotation_euler.x = direction*-.39
+    front = y-depth/2
+    box("Front door", (x,front-.031,base+.67), (.54,.09,1.32), m["navy"],.022)
+    box("Door step", (x,front-.19,base+.07), (.82,.35,.14), m["concrete"],.018)
+    for direction in (-1, 1):
+        window_x = x+direction*width*.31
+        box("White window trim", (window_x,front-.038,base+1.36), (.62,.10,.69), cream,.018)
+        box("Window glass", (window_x,front-.096,base+1.36), (.49,.019,.55), m["glass"],.009)
+        box("Window sash", (window_x,front-.111,base+1.36), (.035,.024,.54), cream,.004)
+    box("Chimney", (x+width*.30,y+.22,base+height+.58), (.29,.32,.61), m["brick"],.012)
+
+
+def town_tree(x,y,scale,m):
+    box("Street tree trunk",(x,y,.66*scale),(.20*scale,.23*scale,1.32*scale),brown)
+    box("Street tree crown",(x,y,1.66*scale),(.84*scale,.86*scale,1.14*scale),m["grass"],.14*scale)
+    box("Low foliage",(x-.24*scale,y+.05,1.42*scale),(.53*scale,.71*scale,.63*scale),m["grass"],.11*scale)
+
+
+def town_bench(x,y,m):
+    for side in (-1,1):
+        box("Bench leg",(x+side*.54,y,.20),(.12,.37,.39),m["navy"],.018)
+    box("Bench seat",(x,y,.42),(1.52,.49,.10),brown,.027)
+    for z in (.58,.73):
+        box("Bench slat",(x,y+.20,z),(1.52,.099,.11),brown,.02)
+
+
+def town_lamp(x,y,m):
+    box("Lamp pole",(x,y,1.35),(.10,.10,2.70),ink,.013)
+    box("Lamp head",(x,y-.12,2.75),(.32,.43,.13),m["navy"],.025)
+    box("Glowing lamp",(x,y-.14,2.687),(.23,.31,.04),m["goldlight"],.016)
+
+
+def town_car(x,y,heading,color,m):
+    car = group("Parked car",(x,y,0))
+    car.rotation_euler.z = heading
+    piece(car,"Car body",(0,0,.32),(1.15,2.02,.36),color,.09)
+    piece(car,"Windshield and cabin",(0,.06,.58),(.91,1.12,.38),m["navy"],.07)
+    piece(car,"Roof",(0,.09,.79),(.94,1.04,.09),color,.033)
+    for side in (-1,1):
+        for end in (-1,1):
+            piece(car,"Wheel",(side*.54,end*.64,.22),(.20,.33,.35),ink,.071)
+        piece(car,"Headlight",(side*.35,-1,.36),(.26,.105,.12),cream,.025)
+
+
+def market_crowd(entries, frames):
+    shirts = ((.12,.50,.62),(.86,.43,.10),(.34,.20,.65),(.22,.53,.30),(.66,.16,.13),(.20,.32,.56))
+    costumes = ("crowd_cap","crowd_bun","crowd_glasses")
+    for index,(x,y,heading,activity) in enumerate(entries):
+        pos=(x,y,0)
+        person = roblox_actor(f"Townsperson {index+1}",pos,
+            material(f"Townsperson {index+1} shirt",shirts[index%len(shirts)]),
+            (brown,ink,brown,ink)[index%4],heading,index%3==2,costumes[index%3])
+        scale=(.78,.93,.86,1.0,.82,.92)[index%6]
+        person[0].scale=(scale,scale,scale)
+        if activity == "walk":
+            move=.63 if index%2 else -.78
+            poses=[(0,pos,(0,0),(0,0),0),
+                   (.52,(x+move*.52,y-.17,0),(-.35,.28),(.22,.10),.18),
+                   (1,(x+move,y-.26,0),(.1,-.29),(.13,.27),.04)]
+        elif activity == "react":
+            poses=[(0,pos,(0,0),(0,0),0),
+                   (.54,(x,y,.01),(-.21,-.36),(.1,.31),-.19),
+                   (.74,(x,y,.11),(-.91,-.77),(.40,.45),.16),
+                   (1,pos,(-.41,-.26),(.18,.14),.06)]
+        else:
+            poses=[(0,pos,(-.16,0),(.3,0),0),
+                   (.6,(x+.04,y,.02),(-.38,0),(.39,.13),-.22),
+                   (1,pos,(-.19,-.11),(.26,0),.09)]
+        market_character_motion(person,frames,poses)
+
+
+def market_neighborhood(action,frames,m):
+    paints = (m["brick"],m["glass"],m["sand"],m["mint"],m["violet"])
+    if action in {"market_street","market_win"}:
+        box("Town ground", (0,9,-.24), (30,27,.41), m["grass"])
+        start = 6.5 if action == "market_street" else 5.9
+        for i,x in enumerate((-8.2,-5.75,5.55,8.02)):
+            town_house(x,start+(i%2)*.54,0,2.23,paints[i],m)
+        for x,y,s in ((-4.4,1.28,1.15),(4.2,1.92,1.12),(-5.9,3.8,1),(5.3,3.8,1.04)):
+            town_tree(x,y,s,m)
+        for x in (-4.3,4.33):
+            town_lamp(x,.87,m)
+        town_car(3.85,-.92,.44,m["brick"],m)
+        town_bench(-3.29,.9,m)
+        if action == "market_street":
+            entries=[(-2.82,1.29,.48,"walk"),(2.95,.68,-.37,"talk"),
+                     (-3.28,-.51,.39,"walk"),(3.9,1.48,-.52,"talk")]
+        else:
+            entries=[(-2.97,1.07,.54,"react"),(2.21,1.19,-.55,"react"),
+                     (1.61,2.1,-.34,"react"),(.16,2.67,.12,"talk"),(-3.45,.25,.94,"walk")]
+        market_crowd(entries,frames)
+    elif action in {"market_count","market_blackout","market_hook"}:
+        for i,x in enumerate((-8.3,-5.7,-3.23,-.72,1.84,4.66,7.27)):
+            town_house(x,7.5+(i%2)*.52,0,2.30,paints[i%5],m)
+        for x in (-4.65,4.78):
+            town_tree(x,2.03,1.08,m)
+        town_car(3.88,-.96,-.17,m["brick"],m)
+        town_car(-4.06,1.18,.18,m["sand"],m)
+        town_bench(3.09,2.48,m)
+        entries=[(-2.4,2.08,.24,"talk"),(2.31,2.19,-.42,"react"),
+                 (3.25,3.11,-.48,"walk"),(-3.24,2.77,.41,"walk"),
+                 (.29,3.27,-.12,"react")]
+        market_crowd(entries,frames)
+    elif action == "market_end":
+        for i,x in enumerate((-9,-6,-3,0,3,6,9)):
+            town_house(x,9.4+(i%3)*.58,-2.3,2.66,paints[i%5],m)
+        for i,x in enumerate((-7.55,-4.3,2.38,6.9)):
+            town_house(x,12.5,-2.1,2.54,paints[(i+2)%5],m)
+        town_lamp(-3.1,1.7,m)
+        town_lamp(3.9,1.7,m)
+    elif action == "market_friend":
+        for x in (-3.6,3.02):
+            box("Table placemat",(x,1.31,.93),(.54,.39,.022),m["pink"],.012)
+            box("Coffee mug",(x,1.32,1.021),(.14,.13,.18),cream,.034)
+        market_crowd([(-3.18,1.54,.16,"talk"),(2.57,1.6,-.28,"talk")],frames)
+    elif action == "market_mayor":
+        market_crowd([(-2.66,.91,.42,"talk")],frames)
+
+
 def stage_market(action, frames):
     m = {
         "navy": material("Midnight blue",(.037,.046,.118)),
@@ -984,7 +1110,12 @@ def stage_market(action, frames):
         "glass": material("Blue glass",(.23,.56,.86)),
         "concrete": material("Pavement",(.39,.42,.5)),
         "mint": material("Mint",(.1,.85,.48)),
+        "sand": material("Warm siding",(.83,.55,.27)),
+        "goldlight": material("Warm lamp glass",(1,.79,.35)),
     }
+    glow = m["goldlight"].node_tree.nodes.get("Principled BSDF")
+    glow.inputs["Emission Color"].default_value = (1,.64,.20,1)
+    glow.inputs["Emission Strength"].default_value = 1.0
     shots = {
         "market_street": market_school, "market_win": market_fountain,
         "market_ticket": market_bedroom, "market_friend": market_diner,
@@ -995,6 +1126,7 @@ def stage_market(action, frames):
         market_crossing(action,frames,m)
     else:
         shots[action](frames,m)
+    market_neighborhood(action,frames,m)
     outside = action in {"market_street","market_win","market_count","market_blackout","market_hook","market_end"}
     is_day = action in {"market_street","market_win"}
     sky.inputs["Color"].default_value = (.31,.54,.88,1) if is_day else (.045,.085,.28,1)

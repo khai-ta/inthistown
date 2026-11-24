@@ -165,6 +165,16 @@ def cut_effects(action, first_frame, frames, fps):
     return []
 
 
+def assemble_video(work, flashes, fps, filename="final.mp4"):
+    # Rebuild frame timestamps from the frame count. Imported FBX scene settings
+    # must not change the narration or caption clock.
+    filters = [f"settb=1/{fps}", "setpts=N", *flashes, "ass=captions.ass"]
+    ffmpeg("-f", "concat", "-safe", "1", "-i", "clips.txt", "-i", "narration.wav",
+           "-map", "0:v", "-map", "1:a", "-vf", ",".join(filters), "-r", str(fps),
+           "-c:v", "libx264", "-crf", "17", "-pix_fmt", "yuv420p", "-c:a", "aac",
+           "-b:a", "160k", "-movflags", "+faststart", filename, cwd=work)
+
+
 def render_episode(args):
     episode_path = args.episode.resolve()
     output = args.output.resolve()
@@ -223,10 +233,7 @@ def render_episode(args):
         if shorts_style:
             caption_header = caption_header.replace("Arial,43", "Arial,44").replace(",2,45,55,195,1", ",2,45,55,446,1")
         (work / "captions.ass").write_text(caption_header + "\n".join(events) + "\n", encoding="utf-8")
-        ffmpeg("-f", "concat", "-safe", "1", "-i", "clips.txt", "-i", "narration.wav",
-               "-map", "0:v", "-map", "1:a", "-vf", ",".join(flashes + ["ass=captions.ass"]),
-               "-c:v", "libx264", "-crf", "17", "-pix_fmt", "yuv420p", "-c:a", "aac",
-               "-b:a", "160k", "-movflags", "+faststart", "final.mp4", cwd=work)
+        assemble_video(work, flashes, args.fps)
         (work / "final.mp4").replace(output)
     print(output)
 

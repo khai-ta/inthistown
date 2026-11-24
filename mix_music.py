@@ -20,7 +20,7 @@ def mix(video, music, output, start, gain):
     fade = min(.6, duration / 2)
     filters = (
         "[0:a]aformat=channel_layouts=stereo[voice];"
-        f"[1:a]aformat=channel_layouts=stereo,volume={gain},apad,"
+        f"[1:a]aformat=channel_layouts=stereo,volume={gain},atrim=duration={duration},"
         f"afade=t=in:d={fade},afade=t=out:st={duration-fade}:d={fade}[music];"
         "[voice][music]amix=inputs=2:duration=first:normalize=0,"
         "alimiter=limit=0.95:level=0:latency=1[audio]"
@@ -31,7 +31,7 @@ def mix(video, music, output, start, gain):
         ffmpeg("-i", str(video), "-ss", str(start), "-i", str(music),
                "-filter_complex", filters, "-map", "0:v:0", "-map", "[audio]",
                "-c:v", "copy", "-c:a", "aac", "-b:a", "192k",
-               "-movflags", "+faststart", str(temporary))
+               "-t", str(duration), "-movflags", "+faststart", str(temporary))
         temporary.replace(output)
 
 

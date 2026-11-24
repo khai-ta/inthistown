@@ -1008,7 +1008,7 @@ def market_rooftop(frames,m):
 
 
 def town_house(x, y, base, width, paint, m):
-    height = 2.12 + width*.09
+    height = 2.89 + width*.13
     depth = 2.2
     box("Siding", (x,y,base+height/2), (width,depth,height), paint)
     for direction in (-1, 1):
@@ -1016,13 +1016,13 @@ def town_house(x, y, base, width, paint, m):
                    (width+.26,1.34,.14), m["navy"], .027)
         roof.rotation_euler.x = direction*-.39
     front = y-depth/2
-    box("Front door", (x,front-.031,base+.67), (.54,.09,1.32), m["navy"],.022)
+    box("Front door", (x,front-.031,base+.94), (.72,.09,1.87), m["navy"],.022)
     box("Door step", (x,front-.19,base+.07), (.82,.35,.14), m["concrete"],.018)
     for direction in (-1, 1):
         window_x = x+direction*width*.31
-        box("White window trim", (window_x,front-.038,base+1.36), (.62,.10,.69), cream,.018)
-        box("Window glass", (window_x,front-.096,base+1.36), (.49,.019,.55), m["glass"],.009)
-        box("Window sash", (window_x,front-.111,base+1.36), (.035,.024,.54), cream,.004)
+        box("White window trim", (window_x,front-.038,base+1.79), (.65,.10,.76), cream,.018)
+        box("Window glass", (window_x,front-.096,base+1.79), (.51,.019,.62), m["glass"],.009)
+        box("Window sash", (window_x,front-.111,base+1.79), (.035,.024,.61), cream,.004)
     box("Chimney", (x+width*.30,y+.22,base+height+.58), (.29,.32,.61), m["brick"],.012)
 
 
@@ -1222,12 +1222,18 @@ def market_sky(is_day, outdoors):
     shader.inputs["Emission Strength"].default_value = .7 if is_day else 2.1
     ellipses = []
     if is_day:
+        hill_green = material("Distant hills",(.175,.30,.22))
+        for x,y,height in ((-21,32,4.4),(-7,37,3.8),(9,33,4.1),(24,38,5.2)):
+            bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=2,location=(x,y,-.68))
+            hill = bpy.context.object
+            hill.scale=(12,8,height)
+            hill.data.materials.append(hill_green)
         light("SUN",(-10,-4,14),1.25,(1,.88,.71),(0,3,0),0)
         sun = material("Warm sun",(1,.66,.25))
         emitter = sun.node_tree.nodes.get("Principled BSDF")
         emitter.inputs["Emission Color"].default_value = (1,.73,.35,1)
         emitter.inputs["Emission Strength"].default_value = 3.8
-        bpy.ops.mesh.primitive_uv_sphere_add(segments=24,ring_count=12,location=(6.7,29,13.2))
+        bpy.ops.mesh.primitive_uv_sphere_add(segments=24,ring_count=12,location=(2.9,27.5,11.7))
         bpy.context.object.scale = (.78,)*3
         bpy.context.object.data.materials.append(sun)
         for cx,cy,cz in ((-9,15,8.7),(4.7,19,9.4),(10,26,11.7),(-2.4,24,10.6)):

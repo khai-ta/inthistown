@@ -3,3 +3,5 @@ output/
 
 /.env.local
 /.venv/
+
+/assets/BlockyCharacter.fbx

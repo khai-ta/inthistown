@@ -3,13 +3,15 @@
 import json
 from pathlib import Path
 
-ACTIONS = {"town", "lie", "appear", "knock", "open", "twist"}
+ACTIONS = {"town", "lie", "appear", "knock", "open", "twist", "clock", "twin", "key", "escape", "dusk", "streetdoor"}
 
 
 def read_episode(path):
     episode = json.loads(Path(path).read_text(encoding="utf-8"))
     if not isinstance(episode, dict):
         raise ValueError("Episode must be an object")
+    if episode.get("avatar") not in (None, "roblox-r15"):
+        raise ValueError("Unsupported avatar type")
     title = episode.get("title")
     if not isinstance(title, str) or not title.strip():
         raise ValueError("Episode needs a title")

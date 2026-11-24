@@ -14,7 +14,8 @@ import wave
 from dotenv import dotenv_values
 
 from episode import read_episode
-from eleven_voice import DEFAULT_MODEL, DEFAULT_VOICE, speak
+from eleven_voice import ADAM_VOICE, DEFAULT_MODEL, DEFAULT_VOICE, speak
+from fetch_avatar import TARGET as AVATAR_FILE
 
 ROOT = Path(__file__).resolve().parent
 SAMPLE_RATE = 48000
@@ -111,7 +112,10 @@ def narration(args, shots, index, work, tracks):
         run("say", "-v", args.voice or "Samantha", "-r", str(args.rate), "-f", "line.txt",
             "-o", source.name, cwd=work)
         words = None
-    ffmpeg("-i", str(source), "-ar", str(SAMPLE_RATE), "-ac", "1", "speech.wav", cwd=work)
+    tempo_filter = ["-af", f"atempo={args.tempo}"] if args.tempo != 1 else []
+    ffmpeg("-i", str(source), *tempo_filter, "-ar", str(SAMPLE_RATE), "-ac", "1", "speech.wav", cwd=work)
+    if words and args.tempo != 1:
+        words = [(word, start / args.tempo, end / args.tempo) for word, start, end in words]
     with wave.open(str(work / "speech.wav"), "rb") as file:
         seconds = file.getnframes() / file.getframerate()
     return seconds, words
@@ -165,6 +169,8 @@ def render_episode(args):
     episode_path = args.episode.resolve()
     output = args.output.resolve()
     episode = read_episode(episode_path)
+    if episode.get("avatar") == "roblox-r15" and not AVATAR_FILE.is_file():
+        raise ValueError("Run python fetch_avatar.py to download Roblox’s blocky R15 rig")
     tracks = imported_tracks(args.narration_dir.resolve(), len(episode["shots"])) if args.narration_dir else []
     output.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix=".episode-", dir=output.parent) as temp:
@@ -241,6 +247,7 @@ def main():
     voice_source = parser.add_mutually_exclusive_group()
     voice_source.add_argument("--provider", choices=("local", "elevenlabs"))
     voice_source.add_argument("--narration-dir", type=Path, help="Import shot-01.mp3, shot-02.mp3, etc.")
+    parser.add_argument("--tempo", type=float, default=1.0, help="Pitch-preserving narration speed multiplier")
     parser.add_argument("--voice", help="ElevenLabs voice ID or macOS voice name")
     parser.add_argument("--model", default=DEFAULT_MODEL, help="ElevenLabs model ID")
     parser.add_argument("--rate", type=int, default=188, help="Words per minute")
@@ -250,6 +257,10 @@ def main():
     parser.add_argument("--engine", choices=("eevee", "cycles"), default="eevee")
     parser.add_argument("--blender", default="blender")
     args = parser.parse_args()
+    if args.voice and args.voice.lower() == "adam" and args.provider != "local":
+        args.voice = ADAM_VOICE
+    if not .5 <= args.tempo <= 2:
+        parser.error("Tempo must be between 0.5 and 2")
     args.api_key = elevenlabs_key() if not args.narration_dir and args.provider != "local" else ""
     args.provider = args.provider or ("elevenlabs" if args.api_key else "local")
     if args.provider == "elevenlabs" and not args.api_key:

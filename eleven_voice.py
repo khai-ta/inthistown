@@ -6,6 +6,7 @@ import re
 from elevenlabs import ElevenLabs
 from elevenlabs.core.api_error import ApiError
 
+ADAM_VOICE = "pNInz6obpgDQGcFmaJgB"
 DEFAULT_VOICE = "JBFqnCBsd6RMkjVDRZzb"  # George
 DEFAULT_MODEL = "eleven_multilingual_v2"
 

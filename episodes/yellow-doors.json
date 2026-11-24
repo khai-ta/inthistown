@@ -1,0 +1,18 @@
+{
+  "title": "The Door With My Name",
+  "avatar": "roblox-r15",
+  "shots": [
+    {"action":"knock","line":"The kid behind the door had my face. He told me I had ten seconds before Mom locked me in."},
+    {"action":"town","line":"In this town, every lie makes a yellow door. Open it, and you find what the liar was hiding."},
+    {"action":"clock","line":"That morning I broke Mom's clock. A tiny brass key fell out. I hid it in my pocket."},
+    {"action":"lie","line":"Mom came running. I pointed at the cat. She didn't even look at the clock. She looked straight at the wall."},
+    {"action":"appear","line":"The door punched through the plaster. Mom grabbed the handle and said, whatever you hear, that's not your brother."},
+    {"action":"twist","line":"Two more doors turned yellow. Mom had just lied twice. I didn't even know I had a brother."},
+    {"action":"open","line":"I opened mine. The kid inside held the hammer I'd hidden. He looked exactly like me, except he was shaking."},
+    {"action":"twin","line":"He said she'd been telling everyone he ran away. The whole time, he'd been right here, listening through the wall."},
+    {"action":"key","line":"Mom stepped toward us. I felt the brass key in my pocket go hot. It fit a lock on his side of the door."},
+    {"action":"escape","line":"I turned it. He stumbled into the hallway, then grabbed my hand and ran. Behind us, Mom started counting down."},
+    {"action":"dusk","line":"We made it as far as the street. I told him we were safe. I wanted so badly for it to be true."},
+    {"action":"streetdoor","line":"Then he stopped running. A yellow door rose out of the road. This time, the knocking came from our side."}
+  ]
+}

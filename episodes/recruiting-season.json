@@ -1,0 +1,99 @@
+{
+  "title": "Everyone's Out Partying, Except Me",
+  "avatar": "roblox-r15",
+  "style": "shorts",
+  "shots": [
+    {
+      "action": "recruit_city",
+      "line": "In this town, everyone's out partying on a Friday night. People are getting dressed, making plans, and probably making some questionable decisions."
+    },
+    {
+      "action": "recruit_desk",
+      "line": "And then there's me."
+    },
+    {
+      "action": "recruit_profile",
+      "line": "Making questionable decisions of my own."
+    },
+    {
+      "action": "recruit_resume",
+      "line": "Welcome to recruiting season as a computer science student. Where you spend hours perfecting your resume just to manually enter everything that's already on it."
+    },
+    {
+      "action": "recruit_submit",
+      "line": "And after answering why I'm passionate about working for a company I discovered 15 minutes ago, I finally submit my application."
+    },
+    {
+      "action": "recruit_reject",
+      "line": "Great."
+    },
+    {
+      "action": "recruit_next",
+      "line": "Anyway, next."
+    },
+    {
+      "action": "recruit_grind",
+      "line": "But applying is only half the battle. Apparently, to become a software engineer, I need to know how to reverse a linked list while someone watches me struggle in real time."
+    },
+    {
+      "action": "recruit_failed",
+      "line": "I'll spend 40 minutes solving a problem, look at the solution, and realize it could've been done in six lines."
+    },
+    {
+      "action": "recruit_accepted",
+      "line": "That little green accepted screen is probably the only thing keeping me going at this point."
+    },
+    {
+      "action": "recruit_calendar",
+      "line": "And occasionally, after sending out an ungodly number of applications, someone actually wants to talk to me."
+    },
+    {
+      "action": "recruit_prep",
+      "line": "Which means days of preparing, practicing technical questions, and rehearsing how to introduce myself without sounding like I've rehearsed how to introduce myself."
+    },
+    {
+      "action": "recruit_mirror_first",
+      "line": "Hi, I'm currently a junior studying computer science at Penn State..."
+    },
+    {
+      "action": "recruit_mirror_second",
+      "line": "Hi, I'm currently a junior..."
+    },
+    {
+      "action": "recruit_mirror_third",
+      "line": "Hi..."
+    },
+    {
+      "action": "recruit_waiting",
+      "line": "And just like that, it's back to waiting."
+    },
+    {
+      "action": "recruit_night",
+      "line": "Sometimes I wonder if I'm taking all of this a little too seriously."
+    },
+    {
+      "action": "recruit_walk",
+      "line": "I'm in college. I'm supposed to be making memories, going out, and enjoying these years before I have actual responsibilities."
+    },
+    {
+      "action": "recruit_reflect",
+      "line": "But at the same time, there's a life I really want to build for myself. And unfortunately, wanting it isn't enough."
+    },
+    {
+      "action": "recruit_uncertain",
+      "line": "The weirdest part is putting in all this work without knowing when, or even if, it's going to pay off."
+    },
+    {
+      "action": "recruit_montage",
+      "line": "I don't have everything figured out. Half the time, I feel like I'm just making it up as I go."
+    },
+    {
+      "action": "recruit_morning",
+      "line": "But every application, every problem, and every interview is another chance to get a little closer to where I want to be."
+    },
+    {
+      "action": "recruit_ending",
+      "line": "Maybe next weekend."
+    }
+  ]
+}

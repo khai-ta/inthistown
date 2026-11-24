@@ -7,7 +7,32 @@ MARKET_ACTIONS = {"market_hook", "market_street", "market_win", "market_ticket",
                   "market_mayor", "market_count", "market_trade", "market_blackout", "market_end"}
 PARTY_ACTIONS = {"party_street", "party_bedroom", "party_knock", "party_invite",
                  "party_power", "party_beat", "party_lantern", "party_end"}
-ACTIONS = {"town", "lie", "appear", "knock", "open", "twist", "clock", "twin", "key", "escape", "dusk", "streetdoor"} | MARKET_ACTIONS | PARTY_ACTIONS
+RECRUIT_ACTIONS = {
+    'recruit_city',
+    'recruit_desk',
+    'recruit_profile',
+    'recruit_resume',
+    'recruit_submit',
+    'recruit_reject',
+    'recruit_next',
+    'recruit_grind',
+    'recruit_failed',
+    'recruit_accepted',
+    'recruit_calendar',
+    'recruit_prep',
+    'recruit_mirror_first',
+    'recruit_mirror_second',
+    'recruit_mirror_third',
+    'recruit_waiting',
+    'recruit_night',
+    'recruit_walk',
+    'recruit_reflect',
+    'recruit_uncertain',
+    'recruit_montage',
+    'recruit_morning',
+    'recruit_ending',
+}
+ACTIONS = {"town", "lie", "appear", "knock", "open", "twist", "clock", "twin", "key", "escape", "dusk", "streetdoor"} | MARKET_ACTIONS | PARTY_ACTIONS | RECRUIT_ACTIONS
 
 
 def read_episode(path):

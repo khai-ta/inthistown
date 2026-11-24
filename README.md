@@ -18,6 +18,8 @@ The standard render is 540 × 960 at 24 fps. Preview timing with `--width 180 --
 
 Set `ELEVENLABS_API_KEY` in your local shell or save it as the password of a generic macOS Keychain item named `inthistown-elevenlabs`. Run with `--provider elevenlabs` to require ElevenLabs. The default is George with Multilingual v2. Set `--voice YOUR_VOICE_ID` to use a different ElevenLabs voice or `--model YOUR_MODEL_ID` to change models. This submits the episode lines to ElevenLabs and uses account credits. Captions follow the returned speech timings.
 
+If your narration comes from ElevenLabs MCP, generate each shot's `line` separately. Save the audio as `shot-01.mp3`, `shot-02.mp3`, and so on in one folder. Run `python3 make_video.py episodes/doors.json --narration-dir path/to/voiceover -o output/moms-yellow-doors.mp4`. WAV and M4A files also work. Imported audio uses estimated caption timings unless you render directly through the timestamp API.
+
 For offline previews, pass `--provider local`. Run `say -v '?'` to list voices installed on the Mac. Try `--voice Daniel --rate 175` to change the local narrator. Blender installed outside your PATH can be selected with `--blender /Applications/Blender.app/Contents/MacOS/Blender`.
 
 ## Make another short

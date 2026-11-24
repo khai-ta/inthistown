@@ -79,9 +79,24 @@ def captions(line, seconds, offset, words=None):
     return events
 
 
-def narration(args, shots, index, work):
+def imported_tracks(directory, count):
+    tracks = []
+    for index in range(1, count + 1):
+        stem = f"shot-{index:02d}"
+        matches = [directory / (stem + suffix) for suffix in (".mp3", ".wav", ".m4a")]
+        files = [path for path in matches if path.is_file()]
+        if len(files) != 1:
+            raise ValueError(f"Expected one {stem}.mp3, .wav, or .m4a in {directory}")
+        tracks.append(files[0])
+    return tracks
+
+
+def narration(args, shots, index, work, tracks):
     line = shots[index]["line"]
-    if args.provider == "elevenlabs":
+    if tracks:
+        source = tracks[index]
+        words = None
+    elif args.provider == "elevenlabs":
         previous = shots[index - 1]["line"] if index else None
         following = shots[index + 1]["line"] if index + 1 < len(shots) else None
         audio, words = speak(args.api_key, args.voice or DEFAULT_VOICE, args.model, line, previous, following)
@@ -94,7 +109,7 @@ def narration(args, shots, index, work):
         run("say", "-v", args.voice or "Samantha", "-r", str(args.rate), "-f", "line.txt",
             "-o", source.name, cwd=work)
         words = None
-    ffmpeg("-i", source.name, "-ar", str(SAMPLE_RATE), "-ac", "1", "speech.wav", cwd=work)
+    ffmpeg("-i", str(source), "-ar", str(SAMPLE_RATE), "-ac", "1", "speech.wav", cwd=work)
     with wave.open(str(work / "speech.wav"), "rb") as file:
         seconds = file.getnframes() / file.getframerate()
     return seconds, words
@@ -148,6 +163,7 @@ def render_episode(args):
     episode_path = args.episode.resolve()
     output = args.output.resolve()
     episode = read_episode(episode_path)
+    tracks = imported_tracks(args.narration_dir.resolve(), len(episode["shots"])) if args.narration_dir else []
     output.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix=".episode-", dir=output.parent) as temp:
         work = Path(temp)
@@ -158,7 +174,7 @@ def render_episode(args):
         total_frames = 0
         for index, shot in enumerate(episode["shots"]):
             print(f"Shot {index + 1}/{len(episode['shots'])} · {shot['action']}", flush=True)
-            speech, words = narration(args, episode["shots"], index, work)
+            speech, words = narration(args, episode["shots"], index, work, tracks)
             frames = max(12, math.ceil((speech + PAD_START + PAD_END) * args.fps))
             duration = frames / args.fps
             events.extend(captions(shot["line"], speech, total_frames / args.fps, words))
@@ -218,7 +234,9 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("episode", type=Path)
     parser.add_argument("-o", "--output", type=Path, default=ROOT / "output" / "episode.mp4")
-    parser.add_argument("--provider", choices=("local", "elevenlabs"))
+    voice_source = parser.add_mutually_exclusive_group()
+    voice_source.add_argument("--provider", choices=("local", "elevenlabs"))
+    voice_source.add_argument("--narration-dir", type=Path, help="Import shot-01.mp3, shot-02.mp3, etc.")
     parser.add_argument("--voice", help="ElevenLabs voice ID or macOS voice name")
     parser.add_argument("--model", default=DEFAULT_MODEL, help="ElevenLabs model ID")
     parser.add_argument("--rate", type=int, default=188, help="Words per minute")
@@ -228,12 +246,12 @@ def main():
     parser.add_argument("--engine", choices=("eevee", "cycles"), default="eevee")
     parser.add_argument("--blender", default="blender")
     args = parser.parse_args()
-    args.api_key = elevenlabs_key() if args.provider != "local" else ""
+    args.api_key = elevenlabs_key() if not args.narration_dir and args.provider != "local" else ""
     args.provider = args.provider or ("elevenlabs" if args.api_key else "local")
     if args.provider == "elevenlabs" and not args.api_key:
         parser.error("Set ELEVENLABS_API_KEY or add the inthistown-elevenlabs Keychain entry")
     dependencies = [args.blender, "ffmpeg"]
-    if args.provider == "local":
+    if args.provider == "local" and not args.narration_dir:
         dependencies.append("say")
     for program in dependencies:
         if not shutil.which(program):

@@ -13,6 +13,13 @@ class EpisodeTests(unittest.TestCase):
         episode = read_episode(path)
         self.assertEqual(len(episode["shots"]), 6)
 
+    def test_market_episode_opens_with_the_town_rule(self):
+        path = Path(__file__).resolve().parents[1] / "episodes" / "kalshi-town.json"
+        shots = read_episode(path)["shots"]
+        self.assertTrue(shots[0]["line"].startswith("In this town,"))
+        self.assertEqual(shots[0]["action"], "market_street")
+        self.assertEqual(len(shots), len({shot["action"] for shot in shots}))
+
     def test_unknown_actions_fail_before_rendering(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "bad.json"

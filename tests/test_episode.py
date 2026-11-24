@@ -4,7 +4,7 @@ import tempfile
 import unittest
 
 from episode import read_episode
-from make_video import caption_time, captions, sound_effect
+from make_video import caption_time, captions, market_caption_margin, sound_effect
 
 
 class EpisodeTests(unittest.TestCase):
@@ -34,6 +34,13 @@ class EpisodeTests(unittest.TestCase):
         self.assertIn(",0:00:05.14,", events[0])
         self.assertIn(",0:00:07.54,", events[-1])
         self.assertEqual(caption_time(59.999), "0:01:00.00")
+
+    def test_phone_caption_uses_lower_safe_margin(self):
+        margin = market_caption_margin("market_ticket")
+        events = captions("Will Milo vanish?", 1.4, 0, single_word=True, margin=margin)
+        self.assertGreater(margin, 0)
+        self.assertLess(margin, 250)
+        self.assertEqual({int(event.split(",", 9)[7]) for event in events}, {margin})
 
     def test_effects_have_the_same_sample_count_as_the_shot(self):
         import wave

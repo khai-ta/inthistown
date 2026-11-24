@@ -65,7 +65,7 @@ To mix a local copy of “Numbers” by TEMPOREX under the narration, run the fo
 
 ## Render Everybody Bet Yes
 
-The Kalshi-town episode uses three [official Roblox avatar bodies](https://create.roblox.com/docs/avatar/resources) with different silhouettes and rigs. Its edit uses moving cameras, bent-joint animation, phone and fountain inserts, animated captions and original sound effects.
+The Kalshi-town episode uses three [official Roblox avatar bodies](https://create.roblox.com/docs/avatar/resources) with different silhouettes and rigs. Milo uses the Classic Blocky body with a beanie, Jules uses Nature Girl, and the mayor uses Stylish Male. Its edit uses moving cameras, bent-joint animation, phone and fountain inserts, animated captions and original sound effects.
 
 ```sh
 .venv/bin/python fetch_avatar.py --market

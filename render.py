@@ -57,13 +57,25 @@ def keys(obj, prop, values):
         obj.keyframe_insert(data_path=prop, frame=frame)
 
 
-def roblox_actor(name, pos, shirt, hair, yaw, adult, model=None):
+def roblox_actor(name, pos, shirt, hair, yaw, adult, model=None, market_lead=False):
     before = set(bpy.data.objects)
     source = AVATAR_FILE if model is None else AVATAR_FILE.with_name(model + ".fbx")
     bpy.ops.import_scene.fbx(filepath=str(source), use_anim=False)
     imported = set(bpy.data.objects) - before
     armature = next(obj for obj in imported if obj.type == "ARMATURE")
-    meshes = [obj for obj in imported if obj.type == "MESH" and obj.name.split(".")[0].endswith("_Geo")]
+    meshes = []
+    for obj in imported:
+        if obj.type != "MESH":
+            continue
+        part = obj.name.split(".")[0]
+        removable = any(label in part for label in ("Cage", "_Att"))
+        if part.endswith("_Geo") or (model is not None and obj.parent == armature and not removable):
+            meshes.append(obj)
+        elif model == "NatureGirl" and part == "NatureArcherGirl_Hair":
+            world = obj.matrix_world.copy()
+            obj.parent = armature
+            obj.matrix_world = world
+            meshes.append(obj)
     bpy.context.view_layer.update()
     foot = min((obj.matrix_world @ Vector(corner)).z for obj in meshes for corner in obj.bound_box)
     top = max((obj.matrix_world @ Vector(corner)).z for obj in meshes for corner in obj.bound_box)
@@ -73,7 +85,7 @@ def roblox_actor(name, pos, shirt, hair, yaw, adult, model=None):
     for mesh in meshes:
         if model is not None:
             for mat in mesh.data.materials:
-                if mat and mat.use_nodes:
+                if mat and mat.use_nodes and mesh.name.split(".")[0].endswith("_Geo"):
                     for link in list(mat.node_tree.links):
                         if link.to_socket.name == "Alpha":
                             mat.node_tree.links.remove(link)
@@ -112,6 +124,10 @@ def roblox_actor(name, pos, shirt, hair, yaw, adult, model=None):
     else:
         cap.rotation_euler.y = -.13
         piece(rig, "Fringe", (-.13, -.177, 2.105), (.25, .11, .145), hair)
+    if market_lead:
+        accent = material("Milo saffron", (.96, .38, .054))
+        piece(rig, "Knit beanie", (0, .006, 2.22), (.54, .50, .16), accent, .073)
+        piece(rig, "Beanie cuff", (0, -.01, 2.158), (.55, .49, .07), denim, .026)
     bpy.context.view_layer.update()
     for accessory in list(rig.children):
         if accessory == armature:
@@ -657,13 +673,13 @@ def stage_market(action, frames):
     for side in (-1, 1):
         piece(board, "Mount", (side*1.69, .05, -1.34), (.14, .14, 2.70), violet)
     market_prop(action, frames, navy, mint, pink, violet)
-    milo = roblox_actor("Milo", (0, -.03, 0), blue, brown, .11, False)
+    milo = roblox_actor("Milo", (0, -.03, 0), violet, brown, .11, False, market_lead=True)
     market_gesture(milo, frames, 1.04 if action in {"market_hook","market_trade","market_count"} else .63)
     if action != "market_ticket":
-        jules = roblox_actor("Jules", (-1.47, .37, .025), pink, ink, .24, False, "Fish-Person")
+        jules = roblox_actor("Jules", (-1.47, .37, .025), pink, ink, .24, False, "NatureGirl")
         market_gesture(jules, frames, 1.0 if action in {"market_friend","market_win"} else .57, 1)
     if action != "market_friend":
-        mayor = roblox_actor("Mayor", (1.47, .43, 0), mint, brown, -.24, True, "GoblinCharacter")
+        mayor = roblox_actor("Mayor", (1.47, .43, 0), mint, brown, -.24, True, "StylishMale")
         market_gesture(mayor, frames, .87, 1)
     if action in {"market_win", "market_trade", "market_hook"}:
         for i in range(19):

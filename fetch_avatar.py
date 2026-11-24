@@ -13,8 +13,10 @@ DIGEST = "3bce4f161bc9b3825d4580e756c0a2da3b737cfbff1c2d41f47405aabe32803a"
 
 
 MARKET_ASSETS = {
-    "Fish-Person": "ee71219663b8c965b2c997fff8b54054bd318eaeab80ec7798c9a7302542dcf8",
-    "GoblinCharacter": "65642c668b69a15bcab36af96f86f6513fa368bd78c83e7a67899415f5024a49",
+    "NatureGirl": ("NatureArcherGirl", "NatureArcherGirl/Blender/NatureArcherGirl_WithClothing.fbx",
+                   "581c16738feda7baff0fce45aaadfc86feb004d1f38795d037471aa5cf2ba384"),
+    "StylishMale": ("StylizedMaleWithClothing", "StylizedMaleWithClothing/Blender/LC_StylizedMale_WithClothing.fbx",
+                   "389286ea7045d74aab928e535fb74674c47a18033cd4d1a8a05a87c522bd1929"),
 }
 
 
@@ -36,14 +38,16 @@ def save(path, data):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--market", action="store_true", help="Also download Fish Person and Goblin")
+    parser.add_argument("--market", action="store_true", help="Also download Nature Girl and Stylish Male")
     args = parser.parse_args()
     save(TARGET, download(URL, 5_000_000, DIGEST))
     if args.market:
-        for name, digest in MARKET_ASSETS.items():
-            archive = download(URL.rsplit("/", 1)[0] + f"/{name}.zip", 25_000_000, digest)
+        art_url = URL.split("/assets/", 1)[0] + "/assets/art/reference-files"
+        for name, (archive_name, member, digest) in MARKET_ASSETS.items():
+            archive = download(f"{art_url}/{archive_name}.zip", 300_000_000, digest)
             with ZipFile(BytesIO(archive)) as bundle:
-                save(TARGET.with_name(f"{name}.fbx"), bundle.read(f"{name}/{name}.fbx"))
+                save(TARGET.with_name(f"{name}.fbx"), bundle.read(member))
+
 
 
 if __name__ == "__main__":

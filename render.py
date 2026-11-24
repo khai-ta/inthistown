@@ -254,27 +254,42 @@ def town(frames, action):
             box("Tree crown", (side*4.1, trunk_y, 1.62), (.9, .95, 1.08), leaf, .18)
     kid, _, arms, legs = actor("Narrator", (.05, -.3, .05), teal, brown, peach)
     keys(kid, "location", [(1, (.05, -.3, .05)), (frames, (.05, -1.1, .05))])
+    casts = [(arms, legs)]
     if action in {"dusk", "streetdoor"}:
-        twin, _, _, _ = actor("Twin", (-.82, .21, .05), teal, brown, peach, -.18)
-        keys(twin, "location", [(1, (-.82, .21, .05)), (frames, (-.72, -.76, .05))])
-        keys(kid, "location", [(1, (.45, -.05, .05)), (frames, (.55, -.9, .05))])
+        twin, _, twin_arms, twin_legs = actor("Twin", (-.82, .21, .05), teal, brown, peach, -.18)
+        casts.append((twin_arms, twin_legs))
+        move_end = frames if action == "dusk" else frames // 2
+        keys(twin, "location", [(1, (-.82, .21, .05)), (move_end, (-.72, -.76, .05))])
+        keys(kid, "location", [(1, (.45, -.05, .05)), (move_end, (.55, -.9, .05))])
         sky.inputs["Color"].default_value = (.14, .28, .51, 1)
     if action == "streetdoor":
         street_portal = group("Door in the road", (0, .7, .045))
         for x in (-.72, .72):
             piece(street_portal, "Portal jamb", (x, 0, 1.24), (.12, .22, 2.48), amber)
         piece(street_portal, "Portal lintel", (0, 0, 2.45), (1.57, .23, .12), amber)
-        piece(street_portal, "Portal leaf", (0, -.045, 1.22), (1.34, .18, 2.36), yellow)
-        piece(street_portal, "Knob", (.49, -.17, 1.21), (.13, .13, .13), ink)
+        door_leaf = group("Knocking door leaf", (0, -.045, 0))
+        door_leaf.parent = street_portal
+        piece(door_leaf, "Portal leaf", (0, 0, 1.22), (1.34, .18, 2.36), yellow)
+        piece(door_leaf, "Knob", (.49, -.125, 1.21), (.13, .13, .13), ink)
         keys(street_portal, "location", [(1, (0, .7, -2.55)), (frames//4, (0, .7, -2.55)),
                                            (frames//2, (0, .7, .045)), (frames, (0, .7, .045))])
-    for limbs, amplitude in ((arms, .29), (legs, -.23)):
-        for index, limb in enumerate(limbs):
-            swing = (-1)**index * amplitude
-            values = [(frame, (angle, 0, 0)) for frame, angle in
-                      ((1, swing), (frames//4, -swing), (frames//2, swing),
-                       (3*frames//4, -swing), (frames, swing))]
-            keys(limb, "rotation_euler", values)
+        knocks = [(1, (0, 0, 0))]
+        for fraction in (.78, .86, .94):
+            beat = int(frames * fraction)
+            knocks.extend([(beat-1, (0, 0, 0)), (beat, (0, -.08, 0)), (beat+2, (0, 0, 0))])
+        keys(door_leaf, "location", knocks)
+        for character, direction in ((kid, 1), (twin, -1)):
+            keys(character, "rotation_euler", [(1, (0, 0, 0)),
+                 (frames//2, (0, 0, 0)), (2*frames//3, (0, 0, direction*2.46))])
+    walk_end = frames if action != "streetdoor" else max(8, frames // 2)
+    for cast_index, (cast_arms, cast_legs) in enumerate(casts):
+        for limbs, amplitude in ((cast_arms, .29), (cast_legs, -.23)):
+            for index, limb in enumerate(limbs):
+                swing = (-1)**(index + cast_index) * amplitude
+                values = [(frame, (angle, 0, 0)) for frame, angle in
+                          ((1, swing), (walk_end//4, -swing), (walk_end//2, swing),
+                           (3*walk_end//4, -swing), (walk_end, 0 if action == "streetdoor" else swing))]
+                keys(limb, "rotation_euler", values)
     light("SUN", (4, -5, 8), 2.0, (1, .88, .68), (0, 0, 0), 0)
     if action == "streetdoor":
         camera((2.4, -4.9, 2.8), (1.7, -4.1, 2.6), (0, .3, 1.22), 34, frames)

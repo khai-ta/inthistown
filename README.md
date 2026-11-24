@@ -4,21 +4,23 @@ A local production pipeline for original vertical block-character stories. The p
 
 ## Render the pilot
 
-On macOS, install Blender 5.3, Python 3.6 or later, and FFmpeg with libass. Homebrew's Blender cask and FFmpeg formula provide the tools used for the pilot.
+On macOS, install Blender 5.3, Python 3.10 or later, and FFmpeg with libass. Homebrew's Blender cask and FFmpeg formula provide the tools used for the pilot.
 
 ```sh
 brew install --cask blender
 brew install ffmpeg
-python3 make_video.py episodes/doors.json -o output/moms-yellow-doors.mp4
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements.txt
+.venv/bin/python make_video.py episodes/doors.json -o output/moms-yellow-doors.mp4
 ```
 
 The standard render is 540 × 960 at 24 fps. Preview timing with `--width 180 --fps 12`, or use `--width 1080` for a larger export. Blender uses Eevee by default. Pass `--engine cycles` for CPU rendering if Eevee is unavailable. The run prints each shot as it starts. The final MP4 appears after all shots finish.
 
 ### Narration
 
-Set `ELEVENLABS_API_KEY` in your local shell or save it as the password of a generic macOS Keychain item named `inthistown-elevenlabs`. Run with `--provider elevenlabs` to require ElevenLabs. The default is George with Multilingual v2. Set `--voice YOUR_VOICE_ID` to use a different ElevenLabs voice or `--model YOUR_MODEL_ID` to change models. This submits the episode lines to ElevenLabs and uses account credits. Captions follow the returned speech timings.
+Run `npx -y @elevenlabs/cli@latest onboard init` for browser-based setup. The renderer reads `ELEVENLABS_API_KEY` from the gitignored `.env.local` file. You can also set it in your shell or save it as the password of a generic macOS Keychain item named `inthistown-elevenlabs`. Run with `--provider elevenlabs` to require ElevenLabs. The default is George with Multilingual v2. Set `--voice YOUR_VOICE_ID` to use a different ElevenLabs voice or `--model YOUR_MODEL_ID` to change models. This submits the episode lines to ElevenLabs and uses account credits. Captions follow the returned speech timings.
 
-If your narration comes from ElevenLabs MCP, generate each shot's `line` separately. Save the audio as `shot-01.mp3`, `shot-02.mp3`, and so on in one folder. Run `python3 make_video.py episodes/doors.json --narration-dir path/to/voiceover -o output/moms-yellow-doors.mp4`. WAV and M4A files also work. Imported audio uses estimated caption timings unless you render directly through the timestamp API.
+If your narration comes from ElevenLabs MCP, generate each shot's `line` separately. Save the audio as `shot-01.mp3`, `shot-02.mp3`, and so on in one folder. Run `.venv/bin/python make_video.py episodes/doors.json --narration-dir path/to/voiceover -o output/moms-yellow-doors.mp4`. WAV and M4A files also work. Imported audio uses estimated caption timings unless you render directly through the timestamp API.
 
 For offline previews, pass `--provider local`. Run `say -v '?'` to list voices installed on the Mac. Try `--voice Daniel --rate 175` to change the local narrator. Blender installed outside your PATH can be selected with `--blender /Applications/Blender.app/Contents/MacOS/Blender`.
 
@@ -42,6 +44,6 @@ Local narration captions estimate word timings from line durations. Foreground s
 ## Verify
 
 ```sh
-python3 -m unittest discover -s tests
+.venv/bin/python -m unittest discover -s tests
 ffprobe -v error -show_entries stream=codec_name,codec_type,width,height,r_frame_rate,duration output/moms-yellow-doors.mp4
 ```

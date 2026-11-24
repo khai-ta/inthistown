@@ -11,6 +11,8 @@ import subprocess
 import tempfile
 import wave
 
+from dotenv import dotenv_values
+
 from episode import read_episode
 from eleven_voice import DEFAULT_MODEL, DEFAULT_VOICE, speak
 
@@ -221,6 +223,8 @@ def render_episode(args):
 
 def elevenlabs_key():
     key = os.environ.get("ELEVENLABS_API_KEY", "").strip()
+    if not key:
+        key = (dotenv_values(ROOT / ".env.local").get("ELEVENLABS_API_KEY") or "").strip()
     if key or sys.platform != "darwin":
         return key
     result = subprocess.run(
@@ -249,7 +253,7 @@ def main():
     args.api_key = elevenlabs_key() if not args.narration_dir and args.provider != "local" else ""
     args.provider = args.provider or ("elevenlabs" if args.api_key else "local")
     if args.provider == "elevenlabs" and not args.api_key:
-        parser.error("Set ELEVENLABS_API_KEY or add the inthistown-elevenlabs Keychain entry")
+        parser.error("Set ELEVENLABS_API_KEY in .env.local, your shell, or the inthistown-elevenlabs Keychain entry")
     dependencies = [args.blender, "ffmpeg"]
     if args.provider == "local" and not args.narration_dir:
         dependencies.append("say")

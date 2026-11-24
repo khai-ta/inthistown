@@ -1,6 +1,5 @@
 import base64
-from io import BytesIO
-import json
+from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
@@ -9,21 +8,22 @@ from make_video import captions, cut_effects
 
 
 class ElevenVoiceTests(unittest.TestCase):
-    @patch("eleven_voice.urlopen")
-    def test_speech_request_and_caption_timing(self, urlopen):
-        urlopen.return_value = BytesIO(json.dumps({
-            "audio_base64": base64.b64encode(b"audio").decode(),
-            "alignment": {
+    @patch("eleven_voice.ElevenLabs")
+    def test_speech_request_and_caption_timing(self, client):
+        convert = client.return_value.text_to_speech.convert_with_timestamps
+        convert.return_value = SimpleNamespace(
+            audio_base64=base64.b64encode(b"audio").decode(),
+            normalized_alignment=None,
+            alignment=SimpleNamespace(model_dump=lambda: {
                 "characters": list("Hi. Run."),
                 "character_start_times_seconds": [.3, .4, .5, .6, 1.1, 1.2, 1.3, 1.4],
                 "character_end_times_seconds": [.4, .5, .6, .7, 1.2, 1.3, 1.4, 1.5],
-            },
-        }).encode())
+            }),
+        )
         audio, words = speak("example-key", DEFAULT_VOICE, DEFAULT_MODEL, "Hi. Run.", "Before.", "After.")
-        request = urlopen.call_args[0][0]
-        self.assertIn("/with-timestamps", request.full_url)
-        self.assertEqual(json.loads(request.data)["previous_text"], "Before.")
-        self.assertEqual(json.loads(request.data)["next_text"], "After.")
+        convert.assert_called_once_with(voice_id=DEFAULT_VOICE, output_format="mp3_44100_128",
+                                        text="Hi. Run.", model_id=DEFAULT_MODEL,
+                                        previous_text="Before.", next_text="After.")
         self.assertEqual(audio, b"audio")
         events = captions("Hi. Run.", 2, 0, words)
         self.assertIn("0:00:00.44", events[0])
